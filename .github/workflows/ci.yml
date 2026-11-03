@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build universal app
+        run: scripts/build.sh --universal
+
+      - name: Smoke test
+        run: |
+          build/TabPulse.app/Contents/MacOS/TabPulse --version
+          lipo -archs build/TabPulse.app/Contents/MacOS/TabPulse
+
+      - name: Hook tests
+        run: scripts/test-hook.sh
+
+      - name: Installer tests
+        run: scripts/test-install.sh
+
+      - name: Shellcheck
+        run: |
+          command -v shellcheck >/dev/null || brew install shellcheck
+          shellcheck install.sh uninstall.sh scripts/*.sh plugin/hooks/*.sh
+
+      - name: Manifests are valid and versions agree
+        run: |
+          v=$(cat VERSION)
+          jq empty plugin/hooks/hooks.json
+          test "$(jq -r .version plugin/.claude-plugin/plugin.json)" = "$v"
+          test "$(jq -r '.plugins[0].version' .claude-plugin/marketplace.json)" = "$v"
+          src=$(jq -r '.plugins[0].source' .claude-plugin/marketplace.json)
+          test -f "$src/.claude-plugin/plugin.json"
+          test -f "$src/hooks/hooks.json"
+
+      - name: Plugin hook events match the installer's
+        run: |
+          events=$(sed -n "s/^EVENTS='\(.*\)'$/\1/p" install.sh)
+          test -n "$events" || { echo "install.sh has no EVENTS='[...]' line" >&2; exit 1; }
+          diff <(jq -r '.hooks | keys[]' plugin/hooks/hooks.json) <(jq -r 'sort[]' <<<"$events")

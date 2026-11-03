@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: ci
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches VERSION
+        run: test "v$(cat VERSION)" = "$GITHUB_REF_NAME"
+
+      - name: Build universal app
+        run: scripts/build.sh --universal
+
+      - name: Package
+        run: |
+          cd build
+          ditto -c -k --keepParent TabPulse.app TabPulse.zip
+          shasum -a 256 TabPulse.zip > TabPulse.zip.sha256
+
+      - name: Release notes from CHANGELOG.md
+        run: |
+          v=$(cat VERSION)
+          awk -v v="$v" 'index($0, "## [" v "]") == 1 {p = 1; next} /^## \[/ {p = 0} p' CHANGELOG.md > build/changes.md
+          grep -q '[^[:space:]]' build/changes.md || { echo "CHANGELOG.md has no content under ## [$v]" >&2; exit 1; }
+          sed "s|{repo}|$GITHUB_REPOSITORY|g" > build/notes.md <<'EOF'
+          ## Install
+
+          ```sh
+          curl -fsSL https://raw.githubusercontent.com/{repo}/main/install.sh | bash
+          ```
+
+          The installer downloads the latest TabPulse.zip from Releases, puts the app in `~/Applications`, adds the Claude Code hooks and starts TabPulse at login.
+
+          TabPulse is ad-hoc signed and not notarized, so macOS blocks the app if you download the zip in a browser and open it yourself. To install it by hand:
+
+          1. Unzip it and move TabPulse.app to `~/Applications`.
+          2. Run `xattr -dr com.apple.quarantine ~/Applications/TabPulse.app`.
+          3. Add the hooks in Claude Code with `/plugin marketplace add {repo}` and `/plugin install tabpulse@tabpulse`.
+
+          Installed this way, TabPulse doesn't start at login. See [Installing the zip by hand](https://github.com/{repo}#installing-the-zip-by-hand) in the README.
+
+          ## Changes
+          EOF
+          cat build/changes.md >> build/notes.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" build/TabPulse.zip build/TabPulse.zip.sha256 \
+            --title "TabPulse $GITHUB_REF_NAME" --notes-file build/notes.md

@@ -1,0 +1,39 @@
+name: Bug report
+description: Something in TabPulse isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you expected, and what you saw instead. A screenshot of the menu or tab helps a lot.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: "macOS, Ghostty (`ghostty +version`), Claude Code (`claude --version`), TabPulse (`~/Applications/TabPulse.app/Contents/MacOS/TabPulse --version`)"
+      placeholder: macOS 15.1, Ghostty 1.4.0, Claude Code 2.1.x, TabPulse 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - One-line installer
+        - Installer (--app-only) + Claude Code plugin
+        - From source
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >
+        Output of `log show --last 10m --predicate 'process == "TabPulse"'` and
+        `cat ~/.claude/tabpulse/sessions/*.json`. Look them over for anything private first.
+      render: text

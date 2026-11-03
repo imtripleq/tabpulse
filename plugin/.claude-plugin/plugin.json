@@ -1,0 +1,10 @@
+{
+  "name": "tabpulse",
+  "version": "0.1.0",
+  "description": "Hooks that feed live Claude Code session status to the TabPulse menu bar app for macOS. Install the app itself with the one-line installer in the README.",
+  "author": { "name": "TabPulse contributors" },
+  "homepage": "https://github.com/imtripleq/tabpulse",
+  "repository": "https://github.com/imtripleq/tabpulse",
+  "license": "MIT",
+  "keywords": ["macos", "menu-bar", "ghostty", "status", "hooks"]
+}

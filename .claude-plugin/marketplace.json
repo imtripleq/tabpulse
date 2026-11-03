@@ -1,0 +1,18 @@
+{
+  "name": "tabpulse",
+  "owner": { "name": "TabPulse contributors" },
+  "metadata": {
+    "description": "TabPulse: live Claude Code session status in the macOS menu bar and in Ghostty tabs."
+  },
+  "plugins": [
+    {
+      "name": "tabpulse",
+      "source": "./plugin",
+      "description": "Hooks for the TabPulse menu bar app (macOS).",
+      "version": "0.1.0",
+      "license": "MIT",
+      "keywords": ["macos", "menu-bar", "ghostty", "status", "hooks"],
+      "category": "productivity"
+    }
+  ]
+}
