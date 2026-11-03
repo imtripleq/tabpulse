@@ -144,15 +144,88 @@ enum Preview {
         }
     }
 
+    /// `TabPulse --menu-demo` shows the same scene live in a borderless window: row spinners turn, the timers count
+    /// and the pill animates. It hides the pointer while it runs, for recording assets/menu-*.gif. Environment:
+    ///   TABPULSE_APPEARANCE=light|dark  force an appearance
+    ///   TABPULSE_DEMO_SECONDS=n         quit after n seconds
+    /// Prints `window <number> <x>,<y>,<w>,<h>` like the gallery. ⌘Q quits.
+    static func menuDemo() {
+        let env = ProcessInfo.processInfo.environment
+        let app = NSApplication.shared
+        app.setActivationPolicy(.regular)
+        let dark = env["TABPULSE_APPEARANCE"].map { $0 == "dark" }
+            ?? (app.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua)
+        app.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+        PillView.stillOverride = false
+        let scene = scene(dark: dark)
+
+        let window = NSWindow(contentRect: scene.canvas.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.hasShadow = false
+        window.contentView = scene.canvas
+        let appMenu = NSMenu()
+        appMenu.addItem(NSMenuItem(title: "Quit TabPulse", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        let appItem = NSMenuItem()
+        appItem.submenu = appMenu
+        app.mainMenu = NSMenu()
+        app.mainMenu?.addItem(appItem)
+        if let screen = NSScreen.main?.visibleFrame { window.setFrameTopLeftPoint(NSPoint(x: screen.minX + 80, y: screen.maxY - 60)) }
+        window.makeKeyAndOrderFront(nil)
+        app.activate(ignoringOtherApps: true)
+        NSCursor.hide()
+
+        let f = window.frame, top = NSScreen.screens.first?.frame.maxY ?? f.maxY
+        print("window \(window.windowNumber) \(Int(f.minX)),\(Int(top - f.maxY)),\(Int(f.width)),\(Int(f.height))")
+        fflush(stdout)
+
+        let start = Date()
+        let timer = Timer(timeInterval: 0.12, repeats: true) { _ in
+            let t = Date().timeIntervalSince(start)
+            for (row, s) in zip(scene.rows, samples) {
+                row.show(state: s.state, detail: s.detail, title: s.title, when: s.state == "done" ? s.when : clock(s.when, plus: Int(t)),
+                         frame: TabStyle.braille.glyph(tick: Int(t / 0.12), elapsed: 0), isNew: s.state == "done")
+            }
+            scene.pill.set(working: 2, waiting: 1, finished: 1)
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        if let seconds = Double(env["TABPULSE_DEMO_SECONDS"] ?? "") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { NSApp.terminate(nil) }
+        }
+        app.run()
+    }
+
+    /// "0:48" plus 7 seconds is "0:55".
+    private static func clock(_ text: String, plus seconds: Int) -> String {
+        let parts = text.split(separator: ":").compactMap { Int($0) }
+        guard parts.count == 2 else { return text }
+        let total = parts[0] * 60 + parts[1] + seconds
+        return String(format: "%d:%02d", total / 60, total % 60)
+    }
+
     private static func snapshot(dark: Bool) -> NSBitmapImageRep {
+        let scene = scene(dark: dark), canvas = scene.canvas
+        let rep = canvas.bitmapImageRepForCachingDisplay(in: canvas.bounds)!
+        canvas.cacheDisplay(in: canvas.bounds, to: rep)
+        if let ctx = NSGraphicsContext(bitmapImageRep: rep)?.cgContext {
+            let scale = CGFloat(rep.pixelsWide) / canvas.bounds.width
+            ctx.scaleBy(x: scale, y: scale)
+            scene.pill.renderStar(in: ctx)
+        }
+        return rep
+    }
+
+    /// The README scene: wallpaper, a menu bar with the pill, and the open menu with the sample sessions.
+    private static func scene(dark: Bool) -> (canvas: NSView, pill: PillView, rows: [SessionRowView]) {
         let menuW: CGFloat = 330, margin: CGFloat = 28, barH: CGFloat = 30
         var items: [NSView] = [MenuTextView("CLAUDE CODE SESSIONS", font: .systemFont(ofSize: 11, weight: .semibold),
                                             kern: 0.9, width: menuW, height: 28)]
+        var rows: [SessionRowView] = []
         for s in samples {
             let row = SessionRowView(frame: NSRect(x: 0, y: 0, width: menuW, height: SessionRowView.height))
             row.show(state: s.state, detail: s.detail, title: s.title, when: s.when, frame: TabStyle.braille.glyph(tick: 2, elapsed: 0),
                      isNew: s.state == "done")
             items.append(row)
+            rows.append(row)
         }
         items.append(Separator(frame: NSRect(x: 0, y: 0, width: menuW, height: 11)))
         items.append(MenuTextView("Click a session to jump to its Ghostty tab", font: .systemFont(ofSize: 12),
@@ -175,15 +248,7 @@ enum Preview {
             canvas.addSubview(v)
         }
         pill.layout()
-
-        let rep = canvas.bitmapImageRepForCachingDisplay(in: canvas.bounds)!
-        canvas.cacheDisplay(in: canvas.bounds, to: rep)
-        if let ctx = NSGraphicsContext(bitmapImageRep: rep)?.cgContext {
-            let scale = CGFloat(rep.pixelsWide) / size.width
-            ctx.scaleBy(x: scale, y: scale)
-            pill.renderStar(in: ctx)
-        }
-        return rep
+        return (canvas, pill, rows)
     }
 
     /// Wallpaper, menu bar strip and menu panel behind the real views.

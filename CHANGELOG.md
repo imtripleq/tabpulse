@@ -4,6 +4,10 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Changed
+
+- The menu picture in the README is now animated. `TabPulse --menu-demo` shows that scene live so it can be recorded.
+
 ## [0.1.0] - 2026-11-03
 
 ### Added

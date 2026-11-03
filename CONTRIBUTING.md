@@ -24,7 +24,7 @@ scripts/build.sh && open build/TabPulse.app
 
 | Path | What it does |
 |---|---|
-| `Sources/TabPulse/main.swift` | Entry point, plus the `--version`, `--render-preview` and `--style-gallery` flags |
+| `Sources/TabPulse/main.swift` | Entry point, plus the `--version`, `--render-preview`, `--menu-demo` and `--style-gallery` flags |
 | `Sources/TabPulse/StatusApp.swift` | Menu bar item, the menu with its Style submenus, and the main loop |
 | `Sources/TabPulse/Styles.swift` | Tab spinner and menu bar style lists with their names and sections, and the saved choices |
 | `Sources/TabPulse/PillView.swift` | The menu bar pill, its animation helpers (`play`, `loop`, `keyframes`, `group`, `pinned`, `capped`) and the shorter menu bar styles |
@@ -80,11 +80,20 @@ The events check reads `install.sh`'s `EVENTS='[...]'` line, so keep that assign
 
 `test-install.sh` never touches your real `~/.claude` or the copy of TabPulse you have running. It unsets `CLAUDE_CONFIG_DIR` and sets `TABPULSE_NO_PROCESS=1`, which tells the scripts not to stop or start the app.
 
-Attach a screenshot to any pull request that changes how something looks. If you change the menu, regenerate the README images too:
+Attach a screenshot to any pull request that changes how something looks. If you change the menu, regenerate the README images too. The still menu-light.png and menu-dark.png come from:
 
 ```sh
 build/TabPulse.app/Contents/MacOS/TabPulse --render-preview assets
 ```
+
+The animated menu-light.gif and menu-dark.gif are screen recordings of `--menu-demo`. It shows the same scene live in a borderless window, with the spinners turning and the timers counting, and hides the pointer while it runs. Once the window is up it prints `window <number> <x>,<y>,<w>,<h>`, which you pass to `screencapture -R`:
+
+```sh
+TABPULSE_APPEARANCE=light TABPULSE_DEMO_SECONDS=9 build/TabPulse.app/Contents/MacOS/TabPulse --menu-demo &
+screencapture -x -v -V 6 -R <x>,<y>,<w>,<h> menu-light.mov   # then the same with dark
+```
+
+Turn each recording into a looping GIF at 15 frames a second and 892 px wide, using any converter you like.
 
 ## Adding a style
 

@@ -13,6 +13,10 @@ if let i = args.firstIndex(of: "--render-preview") {
     Preview.render(to: i + 1 < args.count ? args[i + 1] : ".")
     exit(0)
 }
+if args.contains("--menu-demo") {
+    Preview.menuDemo()
+    exit(0)
+}
 if let i = args.firstIndex(of: "--style-gallery") {
     let filter = i + 1 < args.count && !args[i + 1].hasPrefix("-") ? args[i + 1] : nil
     Preview.gallery(only: filter)

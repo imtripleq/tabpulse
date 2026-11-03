@@ -33,8 +33,8 @@ When macOS asks whether TabPulse may control Ghostty, click OK. Then start `clau
 
 <div align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/menu-dark.png">
-  <img src="assets/menu-light.png" width="446" alt="TabPulse menu: one session waiting for permission to edit, two working, one finished two minutes ago">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/menu-dark.gif">
+  <img src="assets/menu-light.gif" width="446" alt="TabPulse menu with the menu bar pill spinning: one session waiting for permission to edit, two working with their spinners turning and timers counting, one finished two minutes ago">
 </picture>
 </div>
 
