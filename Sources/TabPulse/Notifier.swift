@@ -1,7 +1,14 @@
-import Foundation
+import AppKit
 import UserNotifications
 
-/// Finished-session banners. TabPulse's own notifications come first, because clicking one jumps to the tab.
+/// The Play sounds option's two sounds, picked to be easy to tell apart.
+enum Sound: String {
+    case needsYou = "Ping", finished = "Glass"
+
+    func play() { NSSound(named: rawValue)?.play() }   // a sound already playing isn't started twice
+}
+
+/// Session banners. TabPulse's own notifications come first, because clicking one jumps to the tab.
 /// macOS refuses them on some Macs (often for apps that aren't notarized), and then the banner goes out
 /// through `osascript`, which every Mac allows but shows under Script Editor's name.
 final class Notifier: NSObject, UNUserNotificationCenterDelegate {
@@ -19,7 +26,8 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    func post(title: String, body: String, tty: String) {
+    /// `sound` false when TabPulse plays its own, so you don't hear two. The osascript banner never plays one.
+    func post(title: String, body: String, tty: String, sound: Bool = true) {
         guard bundled else { Self.postWithOsascript(title: title, body: body); return }
         // Asking again is silent once answered, and picks up changes made in System Settings since launch.
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
@@ -27,7 +35,7 @@ final class Notifier: NSObject, UNUserNotificationCenterDelegate {
                 let content = UNMutableNotificationContent()
                 content.title = title
                 content.body = body
-                content.sound = .default
+                content.sound = sound ? .default : nil
                 content.userInfo = ["tty": tty]
                 UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
             } else if error != nil {

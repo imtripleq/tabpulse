@@ -142,7 +142,8 @@ enum BarStyle: String, CaseIterable {
     var isWide: Bool { [.pulse, .scanner, .chomp, .cradle, .prompt].contains(self) }
 }
 
-/// Choices from the Style menu, kept in the app's defaults. `defaults write dev.tabpulse.TabPulse tabStyle moon` works too.
+/// Choices from the Style and Options menus, kept in the app's defaults. `defaults write dev.tabpulse.TabPulse tabStyle moon`
+/// works too.
 enum Prefs {
     private static let store = UserDefaults.standard
 
@@ -155,5 +156,25 @@ enum Prefs {
     /// The menu bar animation runs faster the more sessions are working.
     static var speedsUp = store.object(forKey: "speedsUp") as? Bool ?? true {
         didSet { store.set(speedsUp, forKey: "speedsUp") }
+    }
+    /// Holds off idle sleep while any session is working.
+    static var keepAwake = store.object(forKey: "keepAwake") as? Bool ?? true {
+        didSet { store.set(keepAwake, forKey: "keepAwake") }
+    }
+    /// Also keeps a MacBook awake with the lid closed. Off until you set it up, since it needs your password once.
+    static var lidAwake = store.object(forKey: "lidAwake") as? Bool ?? false {
+        didSet { store.set(lidAwake, forKey: "lidAwake") }
+    }
+    /// One banner when a session has needed you for five minutes.
+    static var waitReminder = store.object(forKey: "waitReminder") as? Bool ?? true {
+        didSet { store.set(waitReminder, forKey: "waitReminder") }
+    }
+    /// Control-Option-Command-J jumps to the tab that needs you.
+    static var jumpShortcut = store.object(forKey: "jumpShortcut") as? Bool ?? true {
+        didSet { store.set(jumpShortcut, forKey: "jumpShortcut") }
+    }
+    /// A short sound when a session needs you or finishes.
+    static var sounds = store.object(forKey: "sounds") as? Bool ?? false {
+        didSet { store.set(sounds, forKey: "sounds") }
     }
 }

@@ -25,7 +25,11 @@ scripts/build.sh && open build/TabPulse.app
 | Path | What it does |
 |---|---|
 | `Sources/TabPulse/main.swift` | Entry point, plus the `--version`, `--render-preview`, `--menu-demo` and `--style-gallery` flags |
-| `Sources/TabPulse/StatusApp.swift` | Menu bar item, the menu with its Style submenus, and the main loop |
+| `Sources/TabPulse/StatusApp.swift` | Menu bar item, the menu with its Style and Options submenus, and the main loop |
+| `Sources/TabPulse/Awake.swift` | Keeps the Mac awake while Claude works, and lid-closed mode's sudoers setup and `pmset` calls |
+| `Sources/TabPulse/AwakePolicy.swift` | When to keep the Mac awake, as plain logic that `scripts/test-logic.sh` checks |
+| `Sources/TabPulse/Attention.swift` | The five-minute reminder and where ⌃⌥⌘J goes, as plain logic that `scripts/test-logic.sh` checks |
+| `Sources/TabPulse/Hotkey.swift` | The ⌃⌥⌘J shortcut |
 | `Sources/TabPulse/Styles.swift` | Tab spinner and menu bar style lists with their names and sections, and the saved choices |
 | `Sources/TabPulse/PillView.swift` | The menu bar pill, its animation helpers (`play`, `loop`, `keyframes`, `group`, `pinned`, `capped`) and the shorter menu bar styles |
 | `Sources/TabPulse/BarStar.swift` | The Sketch, Morph and Cube menu bar styles |
@@ -35,7 +39,7 @@ scripts/build.sh && open build/TabPulse.app
 | `Sources/TabPulse/TabSync.swift` | Spinner titles on Ghostty tabs, and the ten-second peek at Claude's own title |
 | `Sources/TabPulse/Ghostty.swift` | AppleScript calls to Ghostty |
 | `Sources/TabPulse/Session.swift` | Reads the hook's JSON files and forgets sessions whose Claude has exited |
-| `Sources/TabPulse/Notifier.swift` | Finished-session notifications, with an osascript fallback when macOS refuses its own |
+| `Sources/TabPulse/Notifier.swift` | Notifications, with an osascript fallback when macOS refuses its own, and the optional sounds |
 | `Sources/TabPulse/Preview.swift` | Renders the README menu images, and runs the style gallery and its snap mode |
 | `Resources/AppIcon.icns` | The app icon. `scripts/build.sh` copies it into the app bundle |
 | `plugin/hooks/tabpulse-hook.sh` | The Claude Code hook, shared by the installer and the plugin |
@@ -44,6 +48,7 @@ scripts/build.sh && open build/TabPulse.app
 | `assets/` | README images, plus `social-preview.png` for the repository's social preview setting |
 | `install.sh`, `uninstall.sh` | What users run |
 | `scripts/` | Build and test scripts |
+| `Tests/LogicTests.swift` | Checks for the plain logic files, run by `scripts/test-logic.sh` |
 | `.github/workflows/` | CI on pushes to main and on pull requests, and the release on a version tag |
 
 ## Session files
@@ -66,9 +71,12 @@ CI builds a universal app, runs a smoke test and runs these on every pull reques
 
 ```sh
 scripts/test-hook.sh        # feeds fake hook events to the hook
+scripts/test-logic.sh       # checks the keep-awake, reminder and shortcut logic
 scripts/test-install.sh     # installs and uninstalls into a throwaway HOME
 shellcheck install.sh uninstall.sh scripts/*.sh plugin/hooks/*.sh
 ```
+
+There is no XCTest. `test-logic.sh` builds the files with no AppKit or IOKit, listed in its `sources`, together with `Tests/*.swift` into a small command line tool and runs it. Put new decision logic in a file like that, add it to `sources`, and add a group of checks to `Tests/LogicTests.swift`.
 
 CI also checks that the hook events in `plugin/hooks/hooks.json` match `EVENTS` in `install.sh`, that the marketplace points at the plugin, and that the versions agree. It doesn't have the Claude Code CLI and doesn't run `claude plugin validate`, so if you change the plugin or marketplace files, validate them yourself. Without `--strict`, an unknown hook event is only a warning:
 
@@ -78,7 +86,7 @@ claude plugin validate --strict . && claude plugin validate --strict plugin
 
 The events check reads `install.sh`'s `EVENTS='[...]'` line, so keep that assignment on one line, starting at column 0, with nothing after the closing quote. Both `install.sh` and `uninstall.sh` sit inside one `{ ... }` group, so a download cut off halfway through `curl | bash` runs nothing. Keep the closing `}` as the last line.
 
-`test-install.sh` never touches your real `~/.claude` or the copy of TabPulse you have running. It unsets `CLAUDE_CONFIG_DIR` and sets `TABPULSE_NO_PROCESS=1`, which tells the scripts not to stop or start the app.
+`test-install.sh` never touches your real `~/.claude`, the copy of TabPulse you have running or a real lid-closed sudoers rule. It unsets `CLAUDE_CONFIG_DIR`, sets `TABPULSE_NO_PROCESS=1`, which tells the scripts not to stop or start the app, and points `TABPULSE_SUDOERS` at a file in the throwaway HOME. Its lid-closed checks use a stand-in `sudo` that only logs.
 
 Attach a screenshot to any pull request that changes how something looks. If you change the menu, regenerate the README images too. The still menu-light.png and menu-dark.png come from:
 
@@ -147,7 +155,7 @@ TABPULSE_SNAP_DIR=/tmp/frames TABPULSE_SNAP_COUNT=40 TABPULSE_SNAP_EVERY=0.1 \
 
 ## Supporting another terminal
 
-Tab spinners and click-to-jump need four things from a terminal: set a tab's title by tty, read its current title and list every tab's title (for the spinners), and focus a tab (for jumping to it). TabPulse also needs a fifth, `focusedTTY`, the tty of the tab you're looking at. It uses that to skip the finished banner for that tab and to clear its green dot. `Ghostty.swift` does all five over AppleScript. It also provides `isRunning` and the `checkAccess()`/`access` permission check, which `StatusApp` tests before any other call, so TabPulse never launches the terminal or asks for Automation access without reason. Another terminal needs the same calls, plus a way for `StatusApp` to pick which terminal to talk to. Please open an issue first so we can agree on the shape.
+Tab spinners and click-to-jump need four things from a terminal: set a tab's title by tty, read its current title and list every tab's title (for the spinners), and focus a tab (for jumping to it). TabPulse also needs a fifth, `focusedTTY`, the tty of the tab you're looking at. It uses that to skip banners, reminders and sounds for that tab and to clear its green dot. `Ghostty.swift` does all five over AppleScript. It also provides `isRunning` and the `checkAccess()`/`access` permission check, which `StatusApp` tests before any other call, so TabPulse never launches the terminal or asks for Automation access without reason. Another terminal needs the same calls, plus a way for `StatusApp` to pick which terminal to talk to. Please open an issue first so we can agree on the shape.
 
 ## Releasing (maintainers)
 

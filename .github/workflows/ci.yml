@@ -26,6 +26,9 @@ jobs:
       - name: Hook tests
         run: scripts/test-hook.sh
 
+      - name: Logic tests
+        run: scripts/test-logic.sh
+
       - name: Installer tests
         run: scripts/test-install.sh
 
