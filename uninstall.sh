@@ -28,6 +28,18 @@ fi
 if [ -z "${TABPULSE_NO_PROCESS:-}" ] && pkill -x TabPulse 2>/dev/null; then
   sleep 0.5   # on SIGTERM it hands tab titles back before quitting
 fi
+# Lid-closed mode's sudoers rule needs root to remove, so sudo runs only if it exists. Tests set TABPULSE_SUDOERS.
+RULE="${TABPULSE_SUDOERS:-/etc/sudoers.d/tabpulse}"
+if [ -e "$RULE" ]; then
+  echo "Removing the sudoers rule TabPulse added for lid-closed mode. macOS may ask for your password."
+  # The marker means TabPulse quit without turning lid sleep back on.
+  if [ -e "$HOME/.claude/tabpulse/lid-awake" ]; then
+    sudo /usr/bin/pmset -a disablesleep 0 || echo "Couldn't turn lid sleep back on. Run: sudo pmset -a disablesleep 0"
+  fi
+  sudo rm -f "$RULE" || echo "Couldn't remove $RULE. Remove it with: sudo rm $RULE"
+elif [ -e "$HOME/.claude/tabpulse/lid-awake" ]; then
+  echo "Lid sleep may still be off. Turn it back on with: sudo pmset -a disablesleep 0"
+fi
 # The hook copy is shared, so keep it while the default config dir still calls it.
 keep_hook=0
 if [ "$SETTINGS" != "$HOME/.claude/settings.json" ] && grep -qs tabpulse-hook.sh "$HOME/.claude/settings.json"; then keep_hook=1; fi

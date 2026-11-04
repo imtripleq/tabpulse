@@ -19,7 +19,8 @@ S="$T/.claude/settings.json"
 H="$T/.claude/hooks/tabpulse-hook.sh"
 fail=0
 
-in_home() { HOME="$1" TABPULSE_APP="$PWD/build/TabPulse.app" TABPULSE_NO_PROCESS=1 bash "${@:2}"; }
+# TABPULSE_SUDOERS keeps uninstall.sh away from a real lid-closed sudoers rule on the developer's Mac.
+in_home() { HOME="$1" TABPULSE_APP="$PWD/build/TabPulse.app" TABPULSE_NO_PROCESS=1 TABPULSE_SUDOERS="$1/sudoers-rule" bash "${@:2}"; }
 run() { in_home "$T" "$@" >/dev/null; }
 check() { if eval "$2"; then echo "ok   $1"; else echo "FAIL $1"; fail=1; fi; }
 ours() { jq '[.hooks // {} | .[][] | .hooks[] | select(.command | contains("tabpulse-hook.sh"))] | length' "${1:-$S}"; }
@@ -48,7 +49,7 @@ check "uninstall removes the app" '[ ! -e "$T/Applications/TabPulse.app" ]'
 check "uninstall removes the login item" '[ ! -e "$T/Library/LaunchAgents/dev.tabpulse.TabPulse.plist" ]'
 check "uninstall removes the hook script" '[ ! -e "$H" ]'
 
-HOME="$T" TABPULSE_APP="$PWD/build/TabPulse.app" TABPULSE_NO_PROCESS=1 bash install.sh --app-only >/dev/null
+HOME="$T" TABPULSE_APP="$PWD/build/TabPulse.app" TABPULSE_NO_PROCESS=1 TABPULSE_SUDOERS="$T/sudoers-rule" bash install.sh --app-only >/dev/null
 check "--app-only leaves settings.json alone" '[ "$(ours)" = 0 ]'
 
 run install.sh
@@ -97,5 +98,25 @@ enable_plugin "$W"
 plugin_installed "$W"
 CLAUDE_CONFIG_DIR="$W" in_home "$C" install.sh >/dev/null
 check "plugin in one config dir keeps the hook copy another still calls" '[ "$(ours "$W/settings.json")" = 0 ] && [ -f "$C/.claude/hooks/tabpulse-hook.sh" ]'
+
+# A stand-in sudo that only logs, so these never run the real one.
+L="$T/lid"
+mkdir -p "$L/bin" "$L/home"
+printf '#!/bin/bash\necho "$*" >>"%s"\n' "$L/sudo.log" >"$L/bin/sudo"
+chmod +x "$L/bin/sudo"
+lid_uninstall() { PATH="$L/bin:$PATH" in_home "$L/home" uninstall.sh >/dev/null; }
+lid_uninstall
+check "uninstall without the lid-closed sudoers rule never runs sudo" '[ ! -e "$L/sudo.log" ]'
+mkdir -p "$L/home/.claude/tabpulse" && touch "$L/home/.claude/tabpulse/lid-awake"
+PATH="$L/bin:$PATH" in_home "$L/home" uninstall.sh >"$T/out"
+check "uninstall with lid sleep left off but no rule only says how to fix it" '[ ! -e "$L/sudo.log" ] && grep -q "disablesleep 0" "$T/out"'
+touch "$L/home/sudoers-rule"
+lid_uninstall
+check "uninstall removes the lid-closed sudoers rule" 'grep -qx "rm -f $L/home/sudoers-rule" "$L/sudo.log"'
+check "uninstall leaves lid sleep alone when TabPulse turned it back on" '! grep -q pmset "$L/sudo.log"'
+rm -f "$L/sudo.log"
+mkdir -p "$L/home/.claude/tabpulse" && touch "$L/home/.claude/tabpulse/lid-awake"
+lid_uninstall
+check "uninstall turns lid sleep back on when TabPulse left it off" 'grep -qx "/usr/bin/pmset -a disablesleep 0" "$L/sudo.log"'
 
 exit $fail

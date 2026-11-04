@@ -40,7 +40,12 @@ You need macOS 14 or newer, Claude Code 2.1.78 or newer, and Ghostty 1.4 or newe
 - A menu bar count of working sessions. An orange dot means one needs you. A green dot means one finished while you were elsewhere.
 - A list of your sessions showing what each one is doing and for how long. Click one to jump to its Ghostty tab.
 - A notification when a session finishes, unless you're already looking at its tab.
+- Keeps your Mac awake while Claude works (the screen can still sleep), with an optional lid-closed mode.
+- A reminder when a session has waited on you for 5 minutes, and ⌃⌥⌘J to jump to the tab that needs you.
+- Optional sounds when a session needs you or finishes.
 - No network calls. Everything stays on your Mac.
+
+Lid-closed mode, under **Options**, asks for your admin password once to add a sudoers rule that lets TabPulse run `pmset disablesleep` without it. TabPulse then turns lid sleep off only while Claude works, and back on when Claude finishes, the battery drops to 20% or the Mac gets hot. The uninstaller removes the rule.
 
 ## Styles
 
@@ -83,7 +88,7 @@ A small hook script writes each session's state to a JSON file. It prints nothin
 curl -fsSL https://raw.githubusercontent.com/imtripleq/tabpulse/main/uninstall.sh | bash
 ```
 
-This removes TabPulse's hooks from `settings.json` (after saving a backup), then the app, the login item and its files. If you used the plugin, also run `/plugin uninstall tabpulse@tabpulse`.
+This removes TabPulse's hooks from `settings.json` (after saving a backup), then the app, the login item and its files. If you set up lid-closed mode, it also removes the sudoers rule, which asks for your password. If you used the plugin, also run `/plugin uninstall tabpulse@tabpulse`.
 
 ## Other ways to install
 
@@ -145,6 +150,8 @@ Building needs the Xcode Command Line Tools (`xcode-select --install`).
 **Still "needs you" after rejecting a permission.** It clears when Claude Code goes idle, about a minute later.
 
 **The banner says Script Editor.** macOS blocked TabPulse's own notifications, so it sent the banner through AppleScript instead.
+
+**Lid-closed mode won't turn on.** Macs managed by an employer often block the admin step it needs. TabPulse still keeps the Mac awake while the lid is open.
 
 **macOS asks for permission again after an update.** Builds aren't notarized yet, so macOS treats each version as a new app.
 

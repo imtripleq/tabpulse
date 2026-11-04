@@ -4,6 +4,16 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-04
+
+### Added
+
+- Options submenu next to Style. Its first item, Keep Mac awake while Claude works, is on by default and stops idle sleep while any session is working. The screen can still sleep. TabPulse lets go about 15 seconds after nothing is working, when you turn the option off, and when it quits.
+- Lid-closed mode, under Options > Keep awake with lid closed, off by default. It asks for your admin password once and installs a sudoers rule at `/etc/sudoers.d/tabpulse` that allows only `pmset -a disablesleep 1` and `pmset -a disablesleep 0`. TabPulse then turns lid sleep off only while Claude works. It turns it back on when the work finishes, when the battery is at 20% or less and not plugged in, or when the Mac gets hot, and then puts a closed Mac to sleep unless macOS would keep it awake anyway (external display and power). If TabPulse crashes, it turns lid sleep back on at the next launch. The uninstaller removes the rule.
+- A "Still needs you" notification once a session has waited on you for 5 minutes. It comes once per wait, skips the Ghostty tab you are looking at, and jumps to the tab when clicked. Turn it off under Options.
+- ⌃⌥⌘J jumps to the tab that needs you from any app, longest waiting first, and a second press within a few seconds goes to the next one. With nothing waiting, it goes to the newest finished session you haven't seen, and otherwise it beeps. It needs no Accessibility permission. The menu has the same jump, and Options can turn the shortcut off.
+- Optional sounds, under Options > Play sounds: Ping when a session starts waiting on you or a reminder goes out, and Glass when a session finishes. Neither plays for the tab you are looking at. With sounds on, banners skip their own sound, so you hear only one.
+
 ### Changed
 
 - The menu picture in the README is now animated. `TabPulse --menu-demo` shows that scene live so it can be recorded.

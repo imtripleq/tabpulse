@@ -7,6 +7,10 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let ghostty = Ghostty()
     private lazy var tabs = TabSync(ghostty: ghostty)
     private let notifier = Notifier()
+    private let awake = Awake()
+    private let hotkey = Hotkey()
+    private var reminder = WaitReminder()
+    private var cycle = JumpCycle()
     private var item: NSStatusItem!
     private let pill = PillView(frame: .zero)
     private var sessions: [Session] = []
@@ -20,6 +24,7 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var menuOpen = false
     private var ticking = false
     private var pendingJump: String?
+    private var pendingShortcut = false
     private var timer: Timer?
     private var fast = false
     private var previewUntil = Date.distantPast
@@ -42,13 +47,20 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pill.speedsUp = Prefs.speedsUp
         notifier.onClick = { [weak self] tty in self?.jump(to: tty) }
         notifier.start()
+        awake.busy = { [weak self] in self?.ticking ?? false }
+        awake.releaseLeftovers()
+        hotkey.onPress = { [weak self] in self?.jumpToNeedy() }
+        if Prefs.jumpShortcut { hotkey.register() }
         tabs.releaseLeftovers()
         setPace(fast: true)
         installSignalHandler()
         tick()
     }
 
-    func applicationWillTerminate(_ note: Notification) { tabs.releaseAll() }
+    func applicationWillTerminate(_ note: Notification) {
+        awake.releaseAll()
+        tabs.releaseAll()
+    }
 
     // MARK: - Loop
 
@@ -71,6 +83,7 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         defer {
             ticking = false
             if let tty = pendingJump { pendingJump = nil; jump(to: tty) }
+            if pendingShortcut { pendingShortcut = false; jumpToNeedy() }
         }
         frame &+= 1
         var reloaded = false
@@ -93,7 +106,11 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
         }
-        if reloaded { noticeFinished() }
+        if reloaded {
+            noticeWaiting()   // before noticeFinished, which moves `previous` on
+            noticeFinished()
+            updateAwake()
+        }
         renderMenuBar()
         if menuOpen { for s in sessions { if let row = rowViews[s.id] { fill(row, with: s) } } }
         setPace(fast: menuOpen || Date() < previewUntil || sessions.contains { $0.state == "working" })
@@ -122,10 +139,10 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
             unseen.insert(id)
             let took = clock(p.turn, until: s.updated)
             if s.detail.hasPrefix("stopped: ") {   // StopFailure: an API error such as a rate limit ended the turn
-                notifier.post(title: "Stopped: \(tabs.title(for: s))",
-                              body: "Claude stopped in \(s.name) after \(took) (\(s.detail.dropFirst(9)))", tty: s.tty)
+                notify("Stopped: \(tabs.title(for: s))",
+                       "Claude stopped in \(s.name) after \(took) (\(s.detail.dropFirst(9)))", tty: s.tty, sound: .finished)
             } else {
-                notifier.post(title: "Finished: \(tabs.title(for: s))", body: "Claude is done in \(s.name) after \(took)", tty: s.tty)
+                notify("Finished: \(tabs.title(for: s))", "Claude is done in \(s.name) after \(took)", tty: s.tty, sound: .finished)
             }
         }
         // Seen once you look at its tab, or once it starts working again.
@@ -134,6 +151,29 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
             unseen = unseen.filter { id in byID[id].map { $0.state == "done" && $0.tty != f } ?? false }
         }
         previous = byID
+    }
+
+    /// A sound when a session starts waiting on you, and one reminder once it has waited five minutes. Neither for
+    /// the tab you are looking at.
+    private func noticeWaiting() {
+        lazy var focused = ghostty.access == .ok ? ghostty.focusedTTY() : nil   // an AppleScript call, so only when needed
+        if Prefs.sounds, let before = previous,
+           Attention.startedWaiting(sessions, before: before).contains(where: { $0.tty != focused }) {
+            Sound.needsYou.play()
+        }
+        guard Prefs.waitReminder else { return }
+        for s in reminder.due(sessions, now: Date(), focused: { focused }) {
+            let m = max(0, Int(Date().timeIntervalSince(s.since))) / 60
+            notify("Still needs you: \(tabs.title(for: s))",
+                   "Claude has been waiting in \(s.name) for \(m < 60 ? "\(m) min" : "\(m / 60) h \(m % 60) min")",
+                   tty: s.tty, sound: .needsYou)
+        }
+    }
+
+    /// With Play sounds on, TabPulse's own sound stands in for the banner's.
+    private func notify(_ title: String, _ body: String, tty: String, sound: Sound) {
+        if Prefs.sounds { sound.play() }
+        notifier.post(title: title, body: body, tty: tty, sound: !Prefs.sounds)
     }
 
     private func renderMenuBar() {
@@ -185,9 +225,27 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         default:
             menu.addItem(footer(tabsReady ? "Click a session to jump to its Ghostty tab" : "Tab spinners work in Ghostty 1.4+"))
         }
+        if awake.stuck {
+            menu.addItem(footer("Lid sleep is still off: sudo pmset -a disablesleep 0"))
+        } else if awake.holding {
+            menu.addItem(footer(awake.lidHeld ? "Keeping your Mac awake, even with the lid closed" : "Keeping your Mac awake while Claude works"))
+        }
+        if Prefs.jumpShortcut {
+            // The tab is picked now: closing the menu clears `unseen` before the click arrives.
+            let target = cycle.target(sessions.filter { ghosttyTTYs.contains($0.tty) }, unseen: unseen, now: Date())
+            let mi = NSMenuItem(title: "Jump to the tab that needs you", action: target == nil ? nil : #selector(jump(_:)),
+                                keyEquivalent: "j")
+            mi.keyEquivalentModifierMask = [.control, .option, .command]
+            mi.target = self
+            mi.representedObject = target?.tty
+            menu.addItem(mi)
+        }
         let style = NSMenuItem(title: "Style", action: nil, keyEquivalent: "")
         style.submenu = styleMenu()
         menu.addItem(style)
+        let options = NSMenuItem(title: "Options", action: nil, keyEquivalent: "")
+        options.submenu = optionsMenu()
+        menu.addItem(options)
 
         // Kept out of the way like many menu bar apps: hold Option while opening the menu.
         if NSEvent.modifierFlags.contains(.option) {
@@ -295,6 +353,51 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pill.speedsUp = Prefs.speedsUp
     }
 
+    private func optionsMenu() -> NSMenu {
+        let m = NSMenu()
+        m.addItem(choice("Keep Mac awake while Claude works", "", on: Prefs.keepAwake, #selector(toggleKeepAwake)))
+        m.addItem(choice("Keep awake with lid closed…", "", on: Prefs.lidAwake, #selector(toggleLidAwake)))
+        m.addItem(.separator())
+        m.addItem(choice("Remind me if a session waits 5 min", "", on: Prefs.waitReminder, #selector(toggleWaitReminder)))
+        m.addItem(choice("Play sounds", "", on: Prefs.sounds, #selector(toggleSounds)))
+        // In the title, not as a key equivalent, so the shortcut never toggles this item.
+        m.addItem(choice("Jump shortcut ⌃⌥⌘J", "", on: Prefs.jumpShortcut, #selector(toggleJumpShortcut)))
+        return m
+    }
+
+    @objc private func toggleWaitReminder() { Prefs.waitReminder.toggle() }
+
+    @objc private func toggleSounds() {
+        Prefs.sounds.toggle()
+        if Prefs.sounds { Sound.needsYou.play() }   // so you hear what you turned on
+    }
+
+    @objc private func toggleJumpShortcut() {
+        Prefs.jumpShortcut.toggle()
+        Prefs.jumpShortcut ? hotkey.register() : hotkey.unregister()
+    }
+
+    private func updateAwake() { awake.update(working: sessions.filter { $0.state == "working" }.count) }
+
+    @objc private func toggleKeepAwake() {
+        Prefs.keepAwake.toggle()
+        updateAwake()
+    }
+
+    /// Turning it off releases right away; turning it on may ask for your password first.
+    @objc private func toggleLidAwake() {
+        guard !Prefs.lidAwake else {
+            Prefs.lidAwake = false
+            updateAwake()
+            return
+        }
+        awake.setUpLidMode { [weak self] ready in
+            guard ready else { return }
+            Prefs.lidAwake = true
+            self?.updateAwake()
+        }
+    }
+
     private func viewItem(_ view: NSView, enabled: Bool = false) -> NSMenuItem {
         let mi = NSMenuItem()
         mi.view = view
@@ -328,14 +431,26 @@ final class StatusApp: NSObject, NSApplicationDelegate, NSMenuDelegate {
         jump(to: tty)
     }
 
-    private func jump(to tty: String) {
-        guard !tty.isEmpty else { return }
+    /// False when there was no Ghostty tab to go to.
+    @discardableResult
+    private func jump(to tty: String) -> Bool {
+        guard !tty.isEmpty else { return false }
         // A click can arrive while a tick waits on AppleScript; it runs once that tick is done.
-        if ticking { pendingJump = tty; return }
+        if ticking { pendingJump = tty; return true }
         unseen = unseen.filter { id in sessions.first { $0.id == id }?.tty != tty }
         // Never launch Ghostty, or ask for Automation access, just to look for a tab.
-        guard ghostty.isRunning, ghostty.access == .ok else { return }
-        ghostty.focus(tty)
+        guard ghostty.isRunning, ghostty.access == .ok else { return false }
+        return ghostty.focus(tty)
+    }
+
+    /// The ⌃⌥⌘J shortcut. Only sessions in Ghostty tabs count, so a quick second press skips ones it can't reach.
+    private func jumpToNeedy() {
+        // Mid-tick, `sessions` and `unseen` may be half updated; the tick runs this when it is done.
+        if ticking { pendingShortcut = true; return }
+        guard ghostty.isRunning, ghostty.access == .ok else { NSSound.beep(); return }
+        let inGhostty = tabs.refreshTitles()
+        guard let s = cycle.next(sessions.filter { inGhostty.contains($0.tty) }, unseen: unseen, now: Date()),
+              jump(to: s.tty) else { NSSound.beep(); return }
     }
 
     @objc private func openAutomationSettings() {

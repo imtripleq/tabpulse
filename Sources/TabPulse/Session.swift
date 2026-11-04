@@ -46,8 +46,12 @@ enum SessionStore {
                                  detail: j["detail"] as? String ?? "",
                                  event: j["event"] as? String ?? ""))
         }
-        // Needs-you first (longest waiting first), then working (longest running first), then done (most recent first).
-        return found.sorted { a, b in
+        return ordered(found)
+    }
+
+    /// Needs-you first (longest waiting first), then working (longest running first), then done (most recent first).
+    static func ordered(_ found: [Session]) -> [Session] {
+        found.sorted { a, b in
             a.rank != b.rank ? a.rank < b.rank
                 : a.rank == 2 ? a.since > b.since
                 : a.rank == 1 ? a.turn < b.turn
