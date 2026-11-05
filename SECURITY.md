@@ -35,16 +35,16 @@ Only lid-closed mode needs sudo, and it is off by default (see below). The insta
 
 ### The installer
 
-- Puts the app in `~/Applications/TabPulse.app` and writes the login item `~/Library/LaunchAgents/dev.tabpulse.TabPulse.plist`. Unless you use `--app-only` or the plugin, it copies the hook to `~/.claude/hooks/tabpulse-hook.sh`. If a copy is already there, it refreshes it in every mode.
+- Puts the app in `~/Applications/TabPulse.app` and writes the login item `~/Library/LaunchAgents/dev.tabpulse.TabPulse.plist`. The login item runs the app directly, and launchd starts it again only when it exits with an error (`KeepAlive` with `SuccessfulExit` false), so a crash doesn't leave it off. Unless you use `--app-only` or the plugin, it copies the hook to `~/.claude/hooks/tabpulse-hook.sh`. If a copy is already there, it refreshes it in every mode.
 - Changes only the `hooks` section of `settings.json`, creating the file as `{}` if it is missing or empty. It does this only after copying the file to `settings.json.tabpulse-backup`, which each run replaces. jq writes the file back, so its indentation can change. It checks the file is valid JSON before it downloads or changes anything. With `--app-only` it never edits `settings.json`. It reads `plugins/installed_plugins.json` in the same config dir to tell whether the TabPulse plugin is installed.
 - Removes macOS's quarantine flag from the app (`xattr -dr com.apple.quarantine`). TabPulse is signed ad hoc and not notarized, so Gatekeeper would otherwise block it.
-- Quits a running TabPulse before replacing it, and opens the new copy afterwards.
+- Unloads the login item and quits a running TabPulse before replacing it. Afterwards it loads the login item again with `launchctl bootstrap`, which starts the new copy.
 - Downloads only from GitHub: `TabPulse.zip` from a release, or a `git clone` with `--from-source`, both from this repository unless `TABPULSE_REPO` names another one. `TABPULSE_VERSION` picks a specific release, and `TABPULSE_APP` (used by the tests) installs a local app without downloading anything. It verifies the zip against the SHA-256 file published with the same release, and stops if that file can't be downloaded, is empty or doesn't match. This catches a corrupt or incomplete download but not a tampered release, because both files come from the same place. The `--from-source` clone isn't checked.
 
 ### The uninstaller
 
 - Removes TabPulse's hooks from `settings.json` first, after saving a backup. If jq is missing or the file isn't valid JSON, it stops without removing anything.
-- Then quits a running TabPulse and deletes the app, the login item, `~/.claude/tabpulse/` and `~/.claude/hooks/tabpulse-hook.sh`. When it is run for another `CLAUDE_CONFIG_DIR`, it keeps the hook script while `~/.claude/settings.json` still uses it.
+- Then unloads the login item, quits a running TabPulse and deletes the app, the login item, `~/.claude/tabpulse/` and `~/.claude/hooks/tabpulse-hook.sh`. When it is run for another `CLAUDE_CONFIG_DIR`, it keeps the hook script while `~/.claude/settings.json` still uses it.
 - If `/etc/sudoers.d/tabpulse` exists, it runs sudo, which may ask for your password. First it runs `sudo /usr/bin/pmset -a disablesleep 0` if the `lid-awake` marker is there, then `sudo rm -f /etc/sudoers.d/tabpulse`. Without the rule it never runs sudo, and if the marker is there it only tells you how to turn lid sleep back on.
 - Leaves the `settings.json.tabpulse-backup` file and the app's preferences. `defaults delete dev.tabpulse.TabPulse` removes the preferences.
 

@@ -30,22 +30,31 @@ enum Text {
 
 final class SessionRowView: NSView {
     static let height: CGFloat = 44
-    private var glyph = "", glyphColor = NSColor.labelColor, title = "", sub = "", when = ""
+    private var glyph = "", glyphColor = NSColor.labelColor, tint = "", title = "", sub = "", when = ""
     override var isFlipped: Bool { true }
+
+    // Each spinner frame is drawn once into an image and reused. Drawing it through CoreText 8 times a
+    // second while the menu was open crashed TabPulse every few hours on macOS 27 (an exception inside
+    // CoreText's font handling). The set of glyphs is fixed, so the cache stays small.
+    private static var glyphImages: [String: NSImage] = [:]
+    private static let glyphSize = NSSize(width: 28, height: 18)
 
     func show(state: String, detail: String, title: String, when: String, frame: String, isNew: Bool = false) {
         switch state {
         case "working":
             glyph = frame
             glyphColor = Palette.accent
+            tint = "accent"
             sub = "working · " + (detail.isEmpty ? "thinking" : detail)
         case "waiting":
             glyph = "●"
             glyphColor = Palette.warn
+            tint = "warn"
             sub = "needs you" + (detail.isEmpty ? "" : " · " + detail)
         default:
             glyph = "✓"
             glyphColor = Palette.ok
+            tint = "ok"
             // Only a StopFailure's reason; other done writes can carry the last tool's detail.
             sub = "done" + (detail.hasPrefix("stopped") ? " · " + detail : "") + (isNew ? " · new" : "")
         }
@@ -64,12 +73,38 @@ final class SessionRowView: NSView {
         let dim = hi ? NSColor.white.withAlphaComponent(0.8) : NSColor.secondaryLabelColor
         let w = bounds.width, textW = w - 42 - 78
         // Wide enough for the three-cell Typing and Sine spinners, which truncate to an ellipsis at 22 pt.
-        Text.draw(glyph, in: NSRect(x: 9, y: 13, width: 28, height: 18),
-                  font: .monospacedSystemFont(ofSize: 13, weight: .regular), color: hi ? .white : glyphColor, align: .center)
+        glyphImage(hi: hi).draw(in: NSRect(origin: NSPoint(x: 9, y: 13), size: Self.glyphSize), from: .zero,
+                                operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
         Text.draw(title, in: NSRect(x: 42, y: 6, width: textW, height: 17), font: .systemFont(ofSize: 13), color: main)
         Text.draw(sub, in: NSRect(x: 42, y: 23, width: textW, height: 15), font: .systemFont(ofSize: 11.5), color: dim)
         Text.draw(when, in: NSRect(x: w - 14 - 64, y: 14, width: 64, height: 16),
                   font: .monospacedDigitSystemFont(ofSize: 12, weight: .regular), color: dim, align: .right)
+    }
+
+    private func glyphImage(hi: Bool) -> NSImage {
+        let scale = window?.backingScaleFactor ?? 2
+        let dark = effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        let key = "\(glyph)|\(hi ? "white" : tint)|\(dark)|\(scale)"
+        if let cached = Self.glyphImages[key] { return cached }
+        let size = Self.glyphSize
+        let image = NSImage(size: size)
+        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * scale), pixelsHigh: Int(size.height * scale),
+                                         bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)?.retagging(with: .sRGB)
+        else { return image }
+        rep.size = size   // before the context, which takes its scale from it
+        guard let ctx = NSGraphicsContext(bitmapImageRep: rep) else { return image }
+        let color = hi ? NSColor.white : glyphColor
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = ctx
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            Text.draw(glyph, in: NSRect(origin: .zero, size: size),
+                      font: .monospacedSystemFont(ofSize: 13, weight: .regular), color: color, align: .center)
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        image.addRepresentation(rep)
+        Self.glyphImages[key] = image
+        return image
     }
 
     // View-based menu items get the click instead of the menu, so close the menu and fire the item's action.

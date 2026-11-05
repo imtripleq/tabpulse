@@ -64,6 +64,7 @@ The hook writes one file per session to `~/.claude/tabpulse/sessions/<session_id
 | `cwd`, `tty`, `pid` | The session's folder, its terminal and the Claude Code process id (`tty` is empty and `pid` is 0 when the hook couldn't find them) |
 | `event` | The hook event behind the last write, or `TabPulsePeek` when the app marked the turn done itself |
 | `detail` | What it is doing: `running Bash`, `thinking`, `permission to use Edit`, or `stopped: rate limit` after an API error |
+| `background` | What was still running when the turn stopped, such as `workflow review in background`. Empty otherwise. While it is set, the session stays working, and neither the idle notice nor Claude's idle ✳ ends it |
 
 ## Checks
 

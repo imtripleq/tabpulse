@@ -73,7 +73,8 @@ final class TabSync {
         for s in active {
             let peeked = Date().timeIntervalSince(lastPeek[s.tty] ?? .distantPast) > 10
                 && Date().timeIntervalSince(lastAnyPeek) >= gap
-            if peeked && !peek(s) {
+            // Claude shows its idle ✳ while background agents run, so that isn't an Esc.
+            if peeked && !peek(s) && s.background.isEmpty {
                 SessionStore.markDone(s)
                 interrupted.append(s.id)
                 continue

@@ -11,6 +11,7 @@ struct Session {
     let pid: Int32
     let detail: String         // "running Bash", "thinking", "permission to use Edit"
     let event: String          // the hook event behind the last write
+    var background = ""        // agents or a workflow still running after the turn stopped
     var name: String { (cwd as NSString).lastPathComponent }
     var rank: Int { state == "waiting" ? 0 : state == "working" ? 1 : 2 }
 }
@@ -35,8 +36,16 @@ enum SessionStore {
             let gone = pid > 0 ? (kill(pid, 0) != 0 && errno == ESRCH) : Date().timeIntervalSince(updated) > 12 * 3600
             if gone { try? fm.removeItem(atPath: path); continue }
             let since = iso.date(from: j["since"] as? String ?? "") ?? Date()
+            var state = j["state"] as? String ?? "done"
+            let background = j["background"] as? String ?? ""
+            // Killed background work sends no hook, so a long silence ends it rather than spinning (and keeping
+            // the Mac awake) forever. Its agents' tool calls refresh updated while they run.
+            if state == "working" && !background.isEmpty && Date().timeIntervalSince(updated) > staleBackground {
+                state = "done"
+                markDone(path: path, j)
+            }
             found.append(Session(id: String(n.dropLast(5)),
-                                 state: j["state"] as? String ?? "done",
+                                 state: state,
                                  since: since,
                                  turn: iso.date(from: j["turn"] as? String ?? "") ?? since,   // older hooks wrote no turn
                                  updated: updated,
@@ -44,7 +53,8 @@ enum SessionStore {
                                  tty: j["tty"] as? String ?? "",
                                  pid: pid,
                                  detail: j["detail"] as? String ?? "",
-                                 event: j["event"] as? String ?? ""))
+                                 event: j["event"] as? String ?? "",
+                                 background: background))
         }
         return ordered(found)
     }
@@ -63,8 +73,16 @@ enum SessionStore {
     static func markDone(_ s: Session) {
         let path = (dir as NSString).appendingPathComponent("\(s.id).json")
         guard let data = FileManager.default.contents(atPath: path),
-              var j = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+              let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+        markDone(path: path, j)
+    }
+
+    static let staleBackground: TimeInterval = 30 * 60
+
+    private static func markDone(path: String, _ file: [String: Any]) {
+        var j = file
         j["state"] = "done"
+        j["background"] = ""
         j["since"] = iso.string(from: Date())
         j["event"] = "TabPulsePeek"
         if let out = try? JSONSerialization.data(withJSONObject: j, options: [.prettyPrinted]) {

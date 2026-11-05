@@ -25,8 +25,12 @@ if [ -f "$SETTINGS" ] && grep -q tabpulse-hook.sh "$SETTINGS"; then
 fi
 
 # TABPULSE_NO_PROCESS is for tests that run against a throwaway HOME.
-if [ -z "${TABPULSE_NO_PROCESS:-}" ] && pkill -x TabPulse 2>/dev/null; then
-  sleep 0.5   # on SIGTERM it hands tab titles back before quitting
+if [ -z "${TABPULSE_NO_PROCESS:-}" ]; then
+  # Unload the login item first, or launchd would start TabPulse again.
+  launchctl bootout "gui/$(id -u)/dev.tabpulse.TabPulse" 2>/dev/null || true
+  if pkill -x TabPulse 2>/dev/null; then
+    sleep 0.5   # on SIGTERM it hands tab titles back before quitting
+  fi
 fi
 # Lid-closed mode's sudoers rule needs root to remove, so sudo runs only if it exists. Tests set TABPULSE_SUDOERS.
 RULE="${TABPULSE_SUDOERS:-/etc/sudoers.d/tabpulse}"

@@ -9,7 +9,7 @@
       "name": "tabpulse",
       "source": "./plugin",
       "description": "Hooks for the TabPulse menu bar app (macOS).",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "license": "MIT",
       "keywords": ["macos", "menu-bar", "ghostty", "status", "hooks"],
       "category": "productivity"

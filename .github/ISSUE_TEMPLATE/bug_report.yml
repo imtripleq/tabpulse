@@ -18,7 +18,7 @@ body:
     attributes:
       label: Versions
       description: "macOS, Ghostty (`ghostty +version`), Claude Code (`claude --version`), TabPulse (`~/Applications/TabPulse.app/Contents/MacOS/TabPulse --version`)"
-      placeholder: macOS 15.1, Ghostty 1.4.0, Claude Code 2.1.x, TabPulse 0.2.0
+      placeholder: macOS 15.1, Ghostty 1.4.0, Claude Code 2.1.x, TabPulse 0.2.1
     validations:
       required: true
   - type: dropdown

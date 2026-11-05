@@ -123,6 +123,40 @@ check "$(ev PostToolUseFailure Bash "" '{"agent_id": "a1", "is_interrupt": true}
 check "$(ev PreToolUse Bash)" working "running Bash"
 check "$(ev PostToolUseFailure Bash "" '{"is_interrupt": true}')" "done" ""
 
+# A turn that stops with agents or a workflow still running in the background isn't over: they wake Claude again.
+bgnone() { local v; v=$(jq -r '.background' "$STATE"); if [ -z "$v" ]; then pass "$1"; else flunk "$1 (background = $v)"; fi; }
+check "$(ev UserPromptSubmit)" working thinking
+backdate turn
+check "$(ev Stop "" "" '{"background_tasks": [{"id": "w1", "type": "workflow", "status": "running", "name": "review-changes"}]}')" \
+  working "workflow review-changes in background"
+kept turn "a background workflow keeps the turn going"
+check "$(ev PreToolUse Bash "" '{"agent_id": "a1"}')" working "workflow review-changes in background"
+check "$(note "Claude is waiting for your input" idle_prompt)" working "workflow review-changes in background"
+check "$(note "Claude needs your permission to use Bash" permission_prompt)" waiting "permission to use Bash"
+check "$(ev PostToolUse Bash "" '{"agent_id": "a1"}')" working "workflow review-changes in background"
+check "$(ev PreToolUse Read)" working "running Read"
+check "$(ev UserPromptSubmit)" working thinking
+bgnone "a new prompt clears the background note until the turn stops again"
+check "$(ev Stop "" "" '{"background_tasks": []}')" "done" ""
+bgnone "Stop with nothing left running clears the background note"
+check "$(note "Claude is waiting for your input" idle_prompt)" "done" ""
+
+check "$(ev UserPromptSubmit)" working thinking
+check "$(ev Stop "" "" '{"background_tasks": [{"id": "s1", "type": "shell", "command": "npm run dev"}, {"id": "m1", "type": "monitor"}]}')" "done" ""
+check "$(ev UserPromptSubmit)" working thinking
+check "$(ev Stop "" "" '{"background_tasks": [{"id": "a1", "type": "subagent", "agent_type": "Explore"}, {"id": "a2", "type": "subagent"}]}')" \
+  working "2 tasks in background"
+check "$(ev Stop "" "" '{"background_tasks": [{"id": "a2", "type": "subagent"}]}')" working "agent in background"
+check "$(ev Stop "" "" '{"background_tasks": [{"id": "t1", "type": "teammate"}]}')" working "teammate in background"
+check "$(ev PostToolUseFailure Bash "" '{"is_interrupt": true}')" "done" ""
+bgnone "Esc clears the background note"
+check "$(ev UserPromptSubmit)" working thinking
+check "$(ev Stop "" "" '{"background_tasks": "not a list"}')" "done" ""
+check "$(ev UserPromptSubmit)" working thinking
+check "$(ev Stop "" "" '{"background_tasks": [{"id": "a1", "type": "subagent", "agent_type": "Explore"}]}')" working "Explore agent in background"
+check "$(ev StopFailure "" "" '{"error": "rate_limit"}')" "done" "stopped: rate limit"
+bgnone "StopFailure clears the background note"
+
 send "$(ev SessionEnd)"
 if [ ! -e "$STATE" ]; then pass "SessionEnd removes the file"; else flunk "file left after SessionEnd"; fi
 
