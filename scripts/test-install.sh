@@ -36,6 +36,11 @@ run install.sh
 check "app installed" '[ -x "$T/Applications/TabPulse.app/Contents/MacOS/TabPulse" ]'
 check "hook script installed" '[ -f "$H" ]'
 check "login item written" 'plutil -lint "$T/Library/LaunchAgents/dev.tabpulse.TabPulse.plist" >/dev/null'
+# launchd only notices a crash when it runs the app itself; open -a exits at once.
+check "login item runs the app directly" \
+  '[ "$(plutil -extract ProgramArguments.0 raw "$T/Library/LaunchAgents/dev.tabpulse.TabPulse.plist")" = "$T/Applications/TabPulse.app/Contents/MacOS/TabPulse" ]'
+check "login item restarts TabPulse only after a crash" \
+  '[ "$(plutil -extract KeepAlive.SuccessfulExit raw "$T/Library/LaunchAgents/dev.tabpulse.TabPulse.plist")" = false ]'
 check "one TabPulse hook per event after two installs" '[ "$(ours)" = 9 ]'
 check "existing hook kept" 'existing'
 check "other settings kept" '[ "$(jq -r .model "$S")" = opus ]'

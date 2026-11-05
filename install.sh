@@ -81,8 +81,13 @@ fi
 # TABPULSE_NO_PROCESS is for tests that install into a throwaway HOME.
 manage=1
 if [ -n "${TABPULSE_NO_PROCESS:-}" ]; then manage=0; fi
-if [ "$manage" = 1 ] && pkill -x TabPulse 2>/dev/null; then
-  sleep 0.5   # on SIGTERM it hands tab titles back before quitting
+LABEL=dev.tabpulse.TabPulse
+if [ "$manage" = 1 ]; then
+  # Unload the login item first, or launchd would start the old app again as soon as it quits.
+  launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
+  if pkill -x TabPulse 2>/dev/null; then
+    sleep 0.5   # on SIGTERM it hands tab titles back before quitting
+  fi
 fi
 
 say "Installing $APP"
@@ -126,18 +131,25 @@ if [ "$hooks" = 1 ]; then
   cat "$tmp/settings.json" >"$SETTINGS"   # write through, so a symlinked settings.json stays a symlink
 fi
 
+# launchd runs the app itself (not open -a) so it sees a crash and starts TabPulse again.
+# Quit and SIGTERM exit cleanly, so those stay quit until the next login.
 mkdir -p "$(dirname "$AGENT")"
 cat >"$AGENT" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>Label</key><string>dev.tabpulse.TabPulse</string>
-  <key>ProgramArguments</key><array><string>/usr/bin/open</string><string>-a</string><string>$APP</string></array>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key><array><string>$APP/Contents/MacOS/TabPulse</string></array>
   <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>ProcessType</key><string>Interactive</string>
+  <key>LimitLoadToSessionType</key><string>Aqua</string>
 </dict></plist>
 PLIST
 
-if [ "$manage" = 1 ]; then open "$APP"; fi
+if [ "$manage" = 1 ]; then
+  launchctl bootstrap "gui/$(id -u)" "$AGENT" 2>/dev/null || open "$APP"
+fi
 
 version=$(defaults read "$APP/Contents/Info" CFBundleShortVersionString 2>/dev/null || echo "")
 echo

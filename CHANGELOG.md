@@ -4,6 +4,17 @@ All notable changes are listed here. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-05
+
+### Fixed
+
+- TabPulse crashed every few hours on macOS 27 while its menu was open. The exception came from inside Apple's text drawing code as it drew a session's spinner, which happened 8 times a second. TabPulse now draws each spinner frame once and reuses the image.
+- A session with agents, a workflow or teammates still running in the background no longer shows as done, with a finished banner, when Claude's reply ends. It keeps working, the menu says what is still running (for example "workflow review in background"), and it finishes when a reply ends with nothing left running. Background shell commands and monitors don't count, because they are often servers or log tails that never end. If the background work sends nothing for 30 minutes, the session counts as done, so a killed task can't keep the Mac awake. This needs a Claude Code version that passes `background_tasks` to Stop hooks; older ones keep the old behavior.
+
+### Changed
+
+- The login item now runs the app itself instead of `open -a`, so macOS starts TabPulse again within seconds if it crashes. Quit still keeps it closed until you next log in. The installer loads the login item straight away, and the uninstaller unloads it before removing the app.
+
 ## [0.2.0] - 2026-11-04
 
 ### Added

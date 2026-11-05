@@ -36,7 +36,7 @@ You need macOS 14 or newer, Claude Code 2.1.78 or newer, and Ghostty 1.4 or newe
 </picture>
 </div>
 
-- A spinner on every working Ghostty tab, and ● on tabs waiting for you.
+- A spinner on every working Ghostty tab, and ● on tabs waiting for you. A session keeps spinning while its agents or workflows run in the background.
 - A menu bar count of working sessions. An orange dot means one needs you. A green dot means one finished while you were elsewhere.
 - A list of your sessions showing what each one is doing and for how long. Click one to jump to its Ghostty tab.
 - A notification when a session finishes, unless you're already looking at its tab.
@@ -156,6 +156,8 @@ Building needs the Xcode Command Line Tools (`xcode-select --install`).
 **macOS asks for permission again after an update.** Builds aren't notarized yet, so macOS treats each version as a new app.
 
 **Where is Quit?** Hold ⌥ (Option) and click the menu bar icon.
+
+**TabPulse disappeared from the menu bar.** If it crashed, it starts again by itself within a few seconds. If you quit it, open `~/Applications/TabPulse.app`, or log out and back in.
 
 ## Contributing
 

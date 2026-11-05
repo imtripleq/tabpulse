@@ -1,6 +1,6 @@
 {
   "name": "tabpulse",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Hooks that feed live Claude Code session status to the TabPulse menu bar app for macOS. Install the app itself with the one-line installer in the README.",
   "author": { "name": "TabPulse contributors" },
   "homepage": "https://github.com/imtripleq/tabpulse",
