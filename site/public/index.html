@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; base-uri 'self'; form-action 'none'">
+  <title>TabPulse: Claude Code session status for Ghostty and macOS</title>
+  <meta name="description" content="Know when Claude Code is done or needs you, on every Ghostty tab and in your macOS menu bar. Free, open source, no network calls.">
+  <link rel="canonical" href="https://imtripleq.github.io/tabpulse/">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#12172e">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="TabPulse">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="TabPulse: Claude Code status on every Ghostty tab">
+  <meta property="og:description" content="Spinners on working tabs, a dot on tabs that need you, and a session count in your macOS menu bar.">
+  <meta property="og:url" content="https://imtripleq.github.io/tabpulse/">
+  <meta property="og:image" content="https://imtripleq.github.io/tabpulse/og.jpg">
+  <meta property="og:image:type" content="image/jpeg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Ghostty tabs with spinners and the TabPulse menu bar list">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TabPulse: Claude Code status on every Ghostty tab">
+  <meta name="twitter:description" content="Know which Claude Code session is working, waiting on you or done, without tab hopping.">
+  <meta name="twitter:image" content="https://imtripleq.github.io/tabpulse/og.jpg">
+  <meta name="twitter:image:alt" content="Ghostty tabs with spinners and the TabPulse menu bar list">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="./assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./assets/apple-touch-icon.png">
+  <link rel="preload" href="./assets/fonts/recursive-core.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./assets/fonts/tp-glyphs-commit.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./assets/fonts/fonts.css">
+  <link rel="stylesheet" href="./css/base.css">
+  <link rel="stylesheet" href="./css/chrome.css">
+  <link rel="stylesheet" href="./css/hero.css">
+  <link rel="stylesheet" href="./css/night.css">
+  <link rel="stylesheet" href="./css/dawn.css">
+  <link rel="stylesheet" href="./css/specimen.css">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TabPulse",
+    "alternateName": "TabPulse for Claude Code",
+    "description": "macOS menu bar app that shows which Claude Code sessions are working, waiting on you or done, on your Ghostty tabs and in the menu bar.",
+    "url": "https://imtripleq.github.io/tabpulse/",
+    "applicationCategory": "DeveloperApplication",
+    "applicationSubCategory": "Menu bar utility",
+    "operatingSystem": "macOS",
+    "softwareVersion": "0.2.1",
+    "downloadUrl": "https://github.com/imtripleq/tabpulse/releases/latest",
+    "installUrl": "https://imtripleq.github.io/tabpulse/#install",
+    "softwareRequirements": "macOS 14 or later; Claude Code 2.1.78 or later; Ghostty 1.4 or later for tab spinners",
+    "license": "https://opensource.org/licenses/MIT",
+    "isAccessibleForFree": true,
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "image": "https://imtripleq.github.io/tabpulse/og.jpg",
+    "sameAs": ["https://github.com/imtripleq/tabpulse"]
+  }
+  </script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div class="sky" aria-hidden="true"><div class="sky-deep"></div><div class="sky-warm"></div><div class="sky-blue"></div></div>
+  <a class="skip" href="#install">Skip to install</a>
+
+  <header class="site-head">
+    <a class="brand" href="#top"><img src="./assets/app-icon-64.png" width="28" height="28" alt="">TabPulse</a>
+    <nav class="site-nav" aria-label="Page">
+      <a class="link nav-extra" href="#styles">Styles</a>
+      <a class="link nav-extra" href="#faq">Questions</a>
+      <a class="link" href="#install">Install</a>
+      <a class="link" href="https://github.com/imtripleq/tabpulse">GitHub</a>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ============================== Hero: 23:42, a desktop of thirty-two tabs ============================== -->
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-screen" aria-hidden="true">
+        <div class="macbar" data-appearance="dark">
+          <span class="macbar-menus">
+            <span class="macbar-app">Ghostty</span><span>Shell</span><span>Edit</span><span>View</span><span class="macbar-extra">Window</span><span class="macbar-extra">Help</span>
+          </span>
+          <span class="macbar-status">
+            <span class="pill-slot" id="hero-pill"></span>
+            <span class="macbar-clock" id="hero-clock">Thu 23:42</span>
+          </span>
+        </div>
+        <div class="wall-stage" id="wall-stage">
+          <div class="wall" id="wall"></div>
+          <div class="wall-caption" id="wall-caption" data-appearance="dark"></div>
+        </div>
+      </div>
+      <p class="sr-only">Animated scene: a desktop at night with four Ghostty windows stacked on top of each other, eight titled tabs in each, 32 Claude Code sessions. Every tab shows the same spinner frame, stepping together every 0.12 seconds, and the menu bar reads 32. A few seconds in, one tab switches to a dot because it needs you, and the menu bar shows 31 and an orange dot. Pressing the jump shortcut zooms in on that tab, its window says it is waiting for permission, and the TabPulse menu row reads needs you, permission to use Edit.</p>
+
+      <div class="hero-copy">
+        <h1 id="hero-title" class="hero-title">Thirty-two sessions. <span class="nowrap">One needs you.</span></h1>
+
+        <div class="jump" id="jump">
+          <div class="jump-row">
+            <button class="keycaps" id="jump-keys" type="button" aria-describedby="jump-prompt jump-hint">
+              <span class="sr-only">Jump to the tab that needs you (Control Option Command J)</span>
+              <span class="key" data-key="ctrl" aria-hidden="true"><span class="key-sym">⌃</span><span class="key-name">control</span></span>
+              <span class="key" data-key="alt" aria-hidden="true"><span class="key-sym">⌥</span><span class="key-name">option</span></span>
+              <span class="key" data-key="meta" aria-hidden="true"><span class="key-sym">⌘</span><span class="key-name">command</span></span>
+              <span class="key key-letter" data-key="j" aria-hidden="true"><span class="key-sym">J</span></span>
+            </button>
+            <button class="motion-toggle motion-toggle--hero" type="button" data-motion-toggle>
+              <span class="motion-icon" aria-hidden="true"></span><span class="motion-label">Pause animation</span>
+            </button>
+          </div>
+          <p class="jump-prompt" id="jump-prompt" aria-live="polite">When a tab needs you, <span class="kbd-inline">⌃⌥⌘J</span> jumps straight to it.</p>
+          <p class="jump-hint" id="jump-hint">Click the keys, or focus them and press J.<span class="jump-hint-extra"> Your browser may keep <span class="kbd-inline">⌃⌥⌘J</span> for itself.</span></p>
+        </div>
+
+        <p class="hero-lead">See which Claude Code sessions are working, waiting on you or done, right on your Ghostty tabs and in your macOS menu bar.</p>
+
+        <div class="hero-install">
+          <div class="cmd" data-copy-target>
+            <code class="cmd-text" id="hero-cmd">curl -fsSL https://raw.githubusercontent.com/<wbr>imtripleq/<wbr>tabpulse/<wbr>main/<wbr><span class="nowrap">install.sh | bash</span></code>
+            <button class="btn btn-copy" type="button" data-copy="hero-cmd">Copy install command</button>
+          </div>
+          <p class="hero-links">
+            <a class="btn btn-ghost" href="https://github.com/imtripleq/tabpulse"><svg class="icon-star" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8 1.6l1.95 3.95 4.36.63-3.16 3.08.75 4.34L8 11.55l-3.9 2.05.75-4.34L1.69 6.18l4.36-.63z"/></svg>Star on GitHub</a>
+            <a class="link" href="https://github.com/imtripleq/tabpulse/blob/main/install.sh">Read install.sh</a>
+          </p>
+          <p class="hero-reqs">macOS 14+, Claude Code 2.1.78+, Ghostty 1.4+ for tab spinners. The menu bar works with any terminal. Free, MIT licensed, no network calls.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== The night: sticky stage + chapters ============================== -->
+    <section class="night" id="night" aria-labelledby="night-title">
+      <div class="prologue">
+        <h2 class="prologue-title" id="night-title">Claude Code only animates the tab you’re looking at, so from any other tab a busy session looks idle.</h2>
+        <p class="prologue-text">TabPulse puts a spinner on every working tab, a <span class="glyph-inline">●</span> on any tab that needs you, and a session count in the menu bar. Here is one night with it.</p>
+      </div>
+
+      <div class="night-grid">
+        <div class="stage-col">
+          <div class="stage-frame" id="stage-frame">
+            <div class="stage" id="stage" aria-hidden="true"></div>
+            <p class="stage-note" id="stage-note" aria-hidden="true"></p>
+          </div>
+          <div class="stage-foot">
+            <button class="motion-toggle motion-toggle--stage" type="button" data-motion-toggle>
+              <span class="motion-icon" aria-hidden="true"></span><span class="motion-label">Pause animation</span>
+            </button>
+          </div>
+          <p class="sr-only" id="stage-desc" aria-live="polite"></p>
+        </div>
+
+        <ol class="chapters" id="chapters">
+          <li class="chapter" data-step="start" id="at-2310">
+            <h3 class="chapter-title"><time class="chapter-time" datetime="23:10">23:10</time><span class="chapter-head">You start four sessions and step away.</span></h3>
+            <p>Every working tab gets a spinner, and they all step together, one frame every 0.12 seconds. The <span class="glyph-inline">✳︎</span> in the menu bar counts the sessions that are working.</p>
+            <p>Click it for the list: what each session is doing, for how long, and a click on a row jumps to its tab.</p>
+            <p class="chapter-aside">Try it on this page. Switch to another browser tab for a few seconds and watch this one’s title spin. Your browser slows hidden tabs to about one frame a second; the app doesn’t. Stay away for 20 seconds and it switches to <span class="glyph-inline">●</span>.</p>
+          </li>
+
+          <li class="chapter" data-step="waiting" id="at-2342">
+            <h3 class="chapter-title"><time class="chapter-time" datetime="23:42">23:42</time><span class="chapter-head">One needs you.</span></h3>
+            <p>Claude stopped to ask for permission to use Edit. Its tab shows <span class="glyph-inline">●</span>, the menu bar gets an orange dot, and the session moves to the top of the list.</p>
+            <p>Press <span class="kbd-inline">⌃⌥⌘J</span> from any app to jump to it. It needs no Accessibility permission. TabPulse doesn’t add a banner for this, though with sounds on you hear Ping.</p>
+          </li>
+
+          <li class="chapter" data-step="remind" id="at-2347">
+            <h3 class="chapter-title"><time class="chapter-time" datetime="23:47">23:47</time><span class="chapter-head">Five minutes later, one reminder.</span></h3>
+            <p>If a session has waited on you for five minutes, you get one banner: Still needs you. It comes once per wait, skips the tab you’re looking at, and clicking it takes you to the tab.</p>
+          </li>
+
+          <li class="chapter" data-step="lid" id="at-0030">
+            <h3 class="chapter-title"><time class="chapter-time" datetime="00:30">00:30</time><span class="chapter-head">You close the lid.</span></h3>
+            <p>While Claude works, TabPulse keeps your Mac out of idle sleep. The screen can still sleep. That part is on by default.</p>
+            <p>Keeping it awake with the lid closed is optional and off by default. It asks for your admin password once, to add a rule that allows <code>pmset disablesleep</code> and nothing else. Lid sleep comes back on when the work ends, when the battery drops to 20% on battery power, or when the Mac gets hot.</p>
+            <p class="chapter-aside">Macs managed by an employer often block the admin step. As the app’s own dialog puts it: don’t put a working Mac in a bag.</p>
+          </li>
+
+          <li class="chapter" data-step="agents" id="at-0315">
+            <h3 class="chapter-title"><time class="chapter-time" datetime="03:15">03:15</time><span class="chapter-head">Background agents keep it spinning.</span></h3>
+            <p>Claude’s reply has ended, but a workflow is still reviewing in the background, so the session stays working. Agents, teammates and cloud sessions count too. This needs a Claude Code version that passes <code>background_tasks</code> to its Stop hook; on older versions the session counts as done when the reply ends.</p>
+            <p>Background shell commands and monitors don’t, since those are often servers that never end. If background work sends nothing for 30 minutes, the session counts as done, so a stuck task can’t keep your Mac up all night.</p>
+          </li>
+
+          <li class="chapter" data-step="done" id="at-0650">
+            <h3 class="chapter-title"><time class="chapter-time" datetime="06:50">06:50</time><span class="chapter-head">Everything finished.</span></h3>
+            <p>Everything finished overnight, so the Finished banners are waiting when you open the lid. Each one waits about ten seconds in case a hook sends Claude back to work. Then it arrives, for example “Finished: migrate db”. Banners skip the tab you’re looking at, and skip any turn you stopped yourself.</p>
+            <p>The tabs get Claude’s own titles back. With nothing waiting, <span class="kbd-inline">⌃⌥⌘J</span> goes to the newest finished session you haven’t seen.</p>
+            <p><button class="btn btn-key" type="button" id="stage-jump"><span class="kbd-inline" aria-hidden="true">⌃⌥⌘J</span> Jump to the newest finished session</button></p>
+            <p class="stage-jump-note" id="stage-jump-note" aria-live="polite"></p>
+          </li>
+
+          <li class="chapter chapter--dawn" data-step="dawn" id="at-0702">
+            <h3 class="chapter-title"><time class="chapter-time" datetime="07:02">07:02</time><span class="chapter-head">Morning.</span></h3>
+            <p>You’ve seen everything, so the green dot is gone, the <span class="glyph-inline">✳︎</span> is grey and your Mac can sleep again.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================== Dawn ============================== -->
+    <div class="dawn">
+      <section class="install dawn-sec grid" id="install" aria-labelledby="install-title">
+        <div class="install-head">
+          <h2 id="install-title">Install it before tonight</h2>
+          <p class="lead">One line in a terminal. It installs TabPulse to <code>~/Applications</code>, adds the hooks and starts at login.</p>
+        </div>
+        <div class="install-main">
+          <div class="cmd cmd--light">
+            <code class="cmd-text" id="dawn-cmd">curl -fsSL https://raw.githubusercontent.com/<wbr>imtripleq/<wbr>tabpulse/<wbr>main/<wbr><span class="nowrap">install.sh | bash</span></code>
+            <button class="btn btn-copy" type="button" data-copy="dawn-cmd">Copy install command</button>
+          </div>
+          <ol class="next-steps">
+            <li>When macOS asks whether TabPulse may control Ghostty, click OK.</li>
+            <li>Start <code>claude</code> and look for <span class="glyph-inline">✳︎</span> in your menu bar.</li>
+            <li>Restart any sessions that were already open, so they pick up the hooks.</li>
+          </ol>
+          <p class="small">You need macOS 14 or newer, Claude Code 2.1.78 or newer, and Ghostty 1.4 or newer for the tab spinners. The menu bar works with any terminal. On macOS 14, also run <code>brew install jq</code>.</p>
+          <p class="install-links"><a class="link" href="https://github.com/imtripleq/tabpulse/blob/main/install.sh">Read install.sh</a><a class="link" href="https://github.com/imtripleq/tabpulse/releases">Releases</a></p>
+          <p class="install-also">Two things from the night are off until you turn them on in Options: Keep awake with lid closed, and Play sounds (Ping when one needs you, Glass when one finishes). TabPulse follows Reduce Motion, and the app makes no network calls.</p>
+        </div>
+
+        <div class="install-alt">
+          <h3>As a Claude Code plugin</h3>
+          <p>Use this if you don’t want the installer to touch <code>settings.json</code>. Inside Claude Code:</p>
+          <div class="cmd cmd--light cmd--block">
+            <code class="cmd-text" id="plugin-cmd">/plugin marketplace add imtripleq/tabpulse
+/plugin install tabpulse@tabpulse</code>
+            <button class="btn btn-copy" type="button" data-copy="plugin-cmd">Copy plugin commands</button>
+          </div>
+          <p>Then install the app on its own:</p>
+          <div class="cmd cmd--light">
+            <code class="cmd-text" id="apponly-cmd">curl -fsSL https://raw.githubusercontent.com/<wbr>imtripleq/<wbr>tabpulse/<wbr>main/<wbr><span class="nowrap">install.sh | bash</span> -s -- --app-only</code>
+            <button class="btn btn-copy" type="button" data-copy="apponly-cmd">Copy app-only command</button>
+          </div>
+        </div>
+
+        <div class="install-alt" id="uninstall">
+          <h3>Uninstall</h3>
+          <p>Removes the hooks first, after a backup, then the app, the login item and the lid-closed rule if you added it.</p>
+          <div class="cmd cmd--light">
+            <code class="cmd-text" id="uninstall-cmd">curl -fsSL https://raw.githubusercontent.com/<wbr>imtripleq/<wbr>tabpulse/<wbr>main/<wbr><span class="nowrap">uninstall.sh | bash</span></code>
+            <button class="btn btn-copy" type="button" data-copy="uninstall-cmd">Copy uninstall command</button>
+          </div>
+          <p class="small">Plugin users also run <code>/plugin uninstall tabpulse@tabpulse</code>.</p>
+        </div>
+        <p class="sr-only" id="copy-status" aria-live="polite"></p>
+      </section>
+
+      <section class="styles dawn-sec grid" id="styles" aria-labelledby="styles-title">
+        <div class="styles-head">
+          <h2 id="styles-title">16 tab spinners, 24 menu bar styles</h2>
+          <p class="lead">One tab spinner style applies to every tab at once. Pick one here and every tab on this page switches, including this page’s own title while it’s hidden.</p>
+        </div>
+        <div class="styles-tabs">
+          <div class="sheet" id="tab-sheet" role="radiogroup" aria-label="Tab spinner style">
+            <p class="sr-only" id="sheet-keys">Arrow keys move between styles and put each one on every tab.</p>
+            <div class="group" data-section="Glyph" role="group" aria-label="Glyph tab spinners">
+              <div class="group-head">
+                <h3>Glyph</h3>
+                <p>Braille, blocks, arcs and stars, drawn large as what they’re made of. On a tab, each frame is plain text in the title.</p>
+              </div>
+            </div>
+            <div class="group" data-section="Emoji" role="group" aria-label="Emoji tab spinners">
+              <div class="group-head">
+                <h3>Emoji</h3>
+                <p>Your system’s own emoji, on the same tick. Garden is the one that doesn’t loop.</p>
+              </div>
+            </div>
+          </div>
+          <div class="preview">
+            <div id="tab-preview" aria-hidden="true"></div>
+            <p class="preview-note" id="tab-note" aria-live="polite"></p>
+            <p class="preview-more">Every tab steps on the same tick, one frame every 0.12&nbsp;s. With Reduce Motion on, each holds one still frame, and Garden still grows.</p>
+          </div>
+        </div>
+
+        <div class="styles-bar">
+          <div>
+            <h3>Menu bar</h3>
+            <p>Eight of the 24, live. With Speed up when busy on, as it is by default, the mark runs faster as more sessions work: 1.35x for two, 1.6x for three, 1.8x for four or more. A few hold back so they never strobe: Sketch tops out at 1.3x; Chomp, Mochi and Cradle at 1.35x; Brainstorm’s lightning and Rocket’s rumble keep real time.</p>
+            <dl class="bar-names">
+              <div><dt>Star</dt><dd>Spin, Breathe, Hop, Bloom, Neon, Rainbow, Morph, Sketch</dd></div>
+              <div><dt>Signal</dt><dd>Orbit, Comet, Radar, Wave, Helix, Equalizer, Pulse, Scanner</dd></div>
+              <div><dt>Playful</dt><dd>Chomp, Mochi, Kitty, Brainstorm, Rocket, Cradle, Prompt, Cube</dd></div>
+            </dl>
+          </div>
+          <div>
+            <div class="speed">
+              <label class="speed-toggle"><input type="checkbox" id="speed-on" checked><span>Speed up when busy</span></label>
+              <fieldset class="speed-count">
+                <legend>Sessions working</legend>
+                <div class="seg">
+                  <label><input type="radio" name="working" value="1" checked><span>1</span></label>
+                  <label><input type="radio" name="working" value="2"><span>2</span></label>
+                  <label><input type="radio" name="working" value="3"><span>3</span></label>
+                  <label><input type="radio" name="working" value="4"><span>4 or more</span></label>
+                </div>
+              </fieldset>
+              <p class="speed-readout" id="speed-readout" aria-live="polite">1 working: the marks run at their base speed, 1x.</p>
+              <p class="speed-tabs">Tab spinners keep their pace: one frame every 0.12&nbsp;s, however many sessions work.</p>
+            </div>
+            <div class="bar-samples" id="bar-samples" data-appearance="light" aria-hidden="true"></div>
+            <details class="bar-gallery">
+              <summary>Show all 24 styles</summary>
+              <img data-src="./assets/styles-light.gif" width="900" height="590" decoding="async" alt="The TabPulse style gallery: all 24 menu bar styles animating in the light menu bar, in three groups of eight.">
+              <p class="small rm-note">The gallery is an animation, so it stays hidden while your Mac has Reduce Motion on.</p>
+            </details>
+            <p class="small bar-gallery">Or see them on your Mac: <code>~/<wbr>Applications/<wbr>TabPulse.app/<wbr>Contents/<wbr>MacOS/<wbr>TabPulse --style-gallery</code></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="how dawn-sec grid" id="how" aria-labelledby="how-title">
+        <div class="how-head">
+          <h2 id="how-title">How it works</h2>
+          <p class="lead">A small hook script writes each session’s state to a JSON file. It prints nothing and always exits 0, so it can’t block or change a session. TabPulse reads those files once a second, updates the menu bar and sets the Ghostty tab titles.</p>
+        </div>
+        <ol class="flow" aria-label="From Claude Code to your tabs">
+          <li><span class="flow-name">Claude Code</span><span class="flow-what">nine hook events</span></li>
+          <li><span class="flow-name is-path">tabpulse-hook.sh</span><span class="flow-what">bash and jq</span></li>
+          <li><span class="flow-name is-path">sessions/&lt;id&gt;.json</span><span class="flow-what">in <code>~/.claude/tabpulse</code></span></li>
+          <li><span class="flow-name">TabPulse.app</span><span class="flow-what">reads once a second</span></li>
+          <li><span class="flow-name">Tabs and menu bar</span><span class="flow-what">titles over AppleScript</span></li>
+        </ol>
+        <figure class="json">
+          <pre><code>{
+  <span class="j-key">"state"</span>: <span class="j-wait">"waiting"</span>,
+  <span class="j-key">"since"</span>: "2026-11-05T12:42:07Z",
+  <span class="j-key">"turn"</span>: "2026-11-05T12:38:51Z",
+  <span class="j-key">"updated"</span>: "2026-11-05T12:42:07Z",
+  <span class="j-key">"cwd"</span>: "/Users/you/code/shop",
+  <span class="j-key">"tty"</span>: "/dev/ttys004",
+  <span class="j-key">"pid"</span>: <span class="j-num">48213</span>,
+  <span class="j-key">"event"</span>: "Notification",
+  <span class="j-key">"detail"</span>: "permission to use Edit",
+  <span class="j-key">"background"</span>: ""
+}</code></pre>
+          <figcaption>The 23:42 session, as the hook writes it. Times are UTC.</figcaption>
+        </figure>
+        <ul class="trust">
+          <li><h3>Nothing leaves your Mac</h3><p>The app makes no network requests. The installer downloads the release from GitHub, and that’s all.</p></li>
+          <li><h3>One section of settings.json</h3><p>The installer checks that <code>settings.json</code> is valid JSON, saves <code>settings.json.tabpulse-backup</code>, then edits its <code>hooks</code> section and nothing else.</p></li>
+          <li><h3>Read it before you run it</h3><p>The installer is one short shell script. It checks the download against its SHA-256 file to catch a broken download. <a class="link" href="https://github.com/imtripleq/tabpulse/blob/main/install.sh">Read install.sh</a></p></li>
+        </ul>
+      </section>
+
+      <section class="faq dawn-sec grid" id="faq" aria-labelledby="faq-title">
+        <h2 id="faq-title">Questions</h2>
+        <div class="faq-list">
+          <details>
+            <summary>How do I get notified when Claude Code finishes?</summary>
+            <p>About ten seconds after a session finishes, TabPulse sends a Finished banner, and clicking it jumps to the tab. Banners skip the tab you’re looking at and any turn you stopped yourself. If a session has waited on you for five minutes, you also get one Still needs you reminder.</p>
+          </details>
+          <details>
+            <summary>Does it work with iTerm2, Terminal, Warp or tmux?</summary>
+            <p>The menu bar count, session list, notifications, reminders and keep awake work with any terminal. Tab spinners and click to jump need Ghostty 1.4 or newer, with Claude running directly in a Ghostty tab, not inside tmux, screen or zellij. Spinners for other terminals are help wanted.</p>
+          </details>
+          <details>
+            <summary>Can it play a sound when Claude is done or needs me?</summary>
+            <p>Yes, once you turn on Play sounds in Options; it’s off by default. You hear the built-in macOS sounds: Ping when a session starts waiting on you or a reminder goes out, and Glass when one finishes. Neither plays for the tab you’re looking at.</p>
+          </details>
+          <details>
+            <summary>How do I keep my Mac awake while Claude Code works?</summary>
+            <p>You don’t have to do anything: Keep Mac awake while Claude works is on by default. It holds off idle sleep while a session works and lets go about 15 seconds after; the screen can still sleep. Lid-closed mode stays off until you turn it on, asks for your admin password once, and turns lid sleep back on when the work ends, at 20% battery on battery power, or when the Mac gets hot.</p>
+          </details>
+          <details>
+            <summary>What does it change in settings.json?</summary>
+            <p>Just the <code>hooks</code> section, after saving <code>settings.json.tabpulse-backup</code>. The plugin route doesn’t edit <code>settings.json</code> at all, and the uninstaller removes the hooks again.</p>
+          </details>
+          <details>
+            <summary>Does it phone home?</summary>
+            <p>No. The app makes no network calls. The installer downloads the release zip from GitHub and checks it against its SHA-256 file.</p>
+          </details>
+          <details>
+            <summary>Why does macOS say it can’t open TabPulse?</summary>
+            <p>TabPulse is ad-hoc signed and isn’t notarized yet. The installer removes the quarantine flag so it opens; if you unzipped <code>TabPulse.zip</code> by hand, run <code>xattr -dr com.apple.quarantine ~/<wbr>Applications/<wbr>TabPulse.app</code>. Because macOS treats each version as a new app, it asks again for permission to control Ghostty after an update.</p>
+          </details>
+          <details>
+            <summary>Is it free? How do I uninstall it?</summary>
+            <p>Yes, TabPulse is free and open source under the MIT license. To remove it, run the <a class="link" href="#uninstall">uninstall command</a>: it takes the hooks out of <code>settings.json</code> first, after a backup, then removes the app, the login item and the lid-closed rule if you added it. Plugin users also run <code>/plugin uninstall tabpulse@tabpulse</code>.</p>
+          </details>
+          <details>
+            <summary>Ghostty can already mark a tab with a bell. Why this?</summary>
+            <p>When a program rings the bell, Ghostty can put 🔔 on that tab’s title. TabPulse animates every working tab, clears the marker on its own, and adds the menu bar count, the session list, <span class="kbd-inline">⌃⌥⌘J</span>, notifications and keep awake.</p>
+          </details>
+          <details>
+            <summary>Will Claude Code or Ghostty make this obsolete?</summary>
+            <p>Maybe one day. Ghostty has started on a way for programs to report their status, and its app ignores it for now. The menu bar, the jump shortcut, reminders and keep awake don’t depend on the tabs either way.</p>
+          </details>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner grid">
+      <div class="footer-star">
+        <p>If it saves you some tab hopping, a star helps other people find it.</p>
+        <a class="btn btn-dawn" href="https://github.com/imtripleq/tabpulse"><svg class="icon-star" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><path d="M8 1.6l1.95 3.95 4.36.63-3.16 3.08.75 4.34L8 11.55l-3.9 2.05.75-4.34L1.69 6.18l4.36-.63z"/></svg>Star on GitHub</a>
+      </div>
+      <nav class="footer-links" aria-label="Project links">
+        <a class="link" href="https://github.com/imtripleq/tabpulse">GitHub</a>
+        <a class="link" href="https://github.com/imtripleq/tabpulse/blob/main/CHANGELOG.md">Changelog</a>
+        <a class="link" href="https://github.com/imtripleq/tabpulse/blob/main/SECURITY.md">Security policy</a>
+        <a class="link" href="https://github.com/imtripleq/tabpulse/releases">Releases</a>
+      </nav>
+      <p class="footer-legal">TabPulse 0.2.1. Open source under the <a class="link" href="https://github.com/imtripleq/tabpulse/blob/main/LICENSE">MIT license</a>. Not affiliated with Anthropic or Ghostty.</p>
+    </div>
+  </footer>
+</body>
+</html>

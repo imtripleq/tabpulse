@@ -1,0 +1,16 @@
+The fonts in this folder are modified versions (subsets) of fonts released under the
+SIL Open Font License, Version 1.1. Each family's licence and copyright notice is in
+licenses/<family>/OFL.txt. None of the source fonts declares a Reserved Font Name.
+
+recursive-core.woff2       Recursive 1.085 (google/fonts ofl/recursive). slnt pinned to 0 and CRSV to 0.5,
+recursive-ext.woff2        wght limited to 380-790 and CASL to 0-0.8, then subset. The core file holds Basic
+                           Latin plus a few punctuation marks; the extended file holds the rest of Latin-1
+                           and General Punctuation.
+jetbrains-mono-400.woff2   JetBrains Mono 2.305 (JetBrains/JetBrainsMono release). Instanced at wght 400,
+                           subset to Latin-1, General Punctuation and the key symbols U+21E7, U+2303,
+                           U+2318, U+2325, U+23CE.
+tp-glyphs-commit.woff2     Renamed "TP Glyphs Commit". Commit Mono 1.143 subset to the spinner glyphs
+                           (U+00B7, U+25CF, U+2580-259F, U+25DC-25E1, U+2713, U+2800-28FF).
+tp-glyphs-noto.woff2       Renamed "TP Glyphs Noto". Noto Sans Symbols 2 2.008 subset to U+2722, U+2733, U+2736,
+                           U+273B, U+273D, outlines scaled by 0.724 and centred in a 600-unit cell with
+                           Commit Mono's vertical metrics, so it sets in step with TP Glyphs Commit.

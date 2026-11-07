@@ -1,0 +1,68 @@
+/*
+  TabPulse site fonts. Self-hosted woff2 subsets, no third-party requests.
+  Licences: ./licenses/<family>/OFL.txt (SIL Open Font License 1.1). What was changed: ./licenses/NOTICE.txt
+*/
+
+/* Recursive, variable: MONO 0-1, CASL 0-0.8, wght 380-790 (slnt pinned to 0, CRSV to 0.5).
+   The core file covers everything the page shows; the extended file (rest of Latin-1 and
+   General Punctuation) downloads only if a page ever uses one of those characters. */
+@font-face {
+  font-family: "Recursive";
+  src: url("./recursive-core.woff2") format("woff2");
+  font-weight: 380 790;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+20-7E, U+A0, U+B7, U+2013, U+2018-2019, U+201C-201D, U+2022, U+2026;
+}
+@font-face {
+  font-family: "Recursive";
+  src: url("./recursive-ext.woff2") format("woff2");
+  font-weight: 380 790;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+A1-B6, U+B8-FF, U+2007-200B, U+2010, U+2012, U+2014-2015, U+201A, U+201E, U+2020-2021, U+2030, U+2032-2033, U+2039-203A, U+203E, U+2044, U+2052;
+}
+
+/* JetBrains Mono, static 400 (terminal text in the mocks; also has ⌃ ⌥ ⌘ ⇧ ⏎ for systems without them) */
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("./jetbrains-mono-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+  TP Glyphs: the spinner glyph stack. One family, two files split by unicode-range.
+  Braille, blocks, arcs, middle dot, ● and ✓ come from a Commit Mono subset;
+  the Sparkle stars ✢ ✳ ✶ ✻ ✽ come from a Noto Sans Symbols 2 subset.
+  Declared for every weight so browsers never fake-bold the glyphs.
+*/
+@font-face {
+  font-family: "TP Glyphs";
+  src: url("./tp-glyphs-commit.woff2") format("woff2");
+  unicode-range: U+00B7, U+25CF, U+2580-259F, U+25DC-25E1, U+2713, U+2800-28FF;
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "TP Glyphs";
+  src: url("./tp-glyphs-noto.woff2") format("woff2");
+  unicode-range: U+2722, U+2733, U+2736, U+273B, U+273D;
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Spinner glyph box: TP Glyphs first, then the faces macOS itself falls back to, a mono for anything else,
+     emoji last so emoji styles still find them (an emoji font early in a stack would also grab digits and spaces). */
+  --tp-font-glyphs: "TP Glyphs", "Apple Braille", "Apple Symbols", ui-monospace, "SF Mono", Menlo, monospace,
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  /* System UI: real SF Pro on a Mac (tab titles, menu bar, menus). */
+  --tp-font-system: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Terminal body: Ghostty's embedded default is JetBrains Mono. */
+  --tp-font-terminal: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --tp-font-recursive: "Recursive", system-ui, sans-serif;
+}

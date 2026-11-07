@@ -1,0 +1,440 @@
+/* Product mocks: Ghostty windows, the macOS menu bar, the TabPulse pill, menu and banners.
+   Sizes are the app's own points (1 pt = 1 CSS px at 1x) inside scaled canvases. */
+
+/* ---------- Spinner glyph box: fixed width so frame swaps never move the title ---------- */
+.glyph {
+  display: inline-block;
+  flex: none;
+  width: var(--glyph-w);
+  text-align: center;
+  font-family: var(--font-glyph);
+  font-weight: 400;
+  font-variation-settings: normal;
+  line-height: 1;
+  white-space: pre;
+}
+
+/* ---------- Ghostty window ---------- */
+.gw {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #1b1c2b;
+  color: #9a9ba5;
+  font-family: var(--font-sys);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.14),
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 18px 44px -10px rgba(3, 5, 18, 0.72);
+  transition: opacity 420ms var(--ease-out), filter 420ms var(--ease-out);
+}
+.gw-titlebar {
+  display: flex;
+  align-items: center;
+  flex: none;
+  height: 28px;
+  padding: 0 12px;
+  gap: 8px;
+}
+.gw-lights { display: flex; gap: 8px; flex: none; }
+.gw-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3c3d4a;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.25);
+  transition: background-color 240ms ease;
+}
+.gw.is-focused .gw-light:nth-child(1) { background: #ff605c; }
+.gw.is-focused .gw-light:nth-child(2) { background: #ffbd44; }
+.gw.is-focused .gw-light:nth-child(3) { background: #00ca4e; }
+.gw-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: #6c6d78;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: color 240ms ease;
+}
+.gw.is-focused .gw-title { color: #a9aab4; }
+.gw-title .glyph { color: inherit; font-size: 1.2em; }
+.gw-title-text { overflow: hidden; text-overflow: ellipsis; }
+
+.gw-trackrow {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px 6px;
+}
+.gw-track {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  padding: 2px;
+  gap: 2px;
+  border-radius: 999px;
+  background: #2d2e39;
+}
+.gw-plus {
+  position: relative;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2d2e39;
+}
+.gw-plus::before,
+.gw-plus::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 1.3px;
+  border-radius: 1px;
+  background: #8c8d97;
+  transform: translate(-50%, -50%);
+}
+.gw-plus::after { transform: translate(-50%, -50%) rotate(90deg); }
+
+.gw-tab {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  container-type: inline-size;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a2a3ad;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+.gw-tab-in {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 10px;
+}
+.gw-tab + .gw-tab::before {
+  /* hairline between two unselected tabs */
+  content: "";
+  position: absolute;
+  left: -1.5px;
+  top: 5px;
+  bottom: 5px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.gw-tab.is-selected::before,
+.gw-tab.is-selected + .gw-tab::before { display: none; }
+.gw-tab.is-selected {
+  background: #373844;
+  color: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), 0 1px 1.5px rgba(0, 0, 0, 0.28);
+}
+/* The glyph is part of the title, so it takes the title colour. TP Glyphs draws Braille small; a size step up gives it the weight it has in Ghostty's own tab font */
+.gw-tab .glyph { color: inherit; font-size: 1.3em; }
+.gw-tab-title {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.gw-tab-key {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  opacity: 0.62;
+}
+.gw-tab.is-selected .gw-tab-key { opacity: 0.9; }
+.gw-tab.has-key .gw-tab-in { padding-right: 34px; padding-left: 26px; }
+/* A finished tab: Claude's own title back, no glyph, dimmed */
+.gw-tab.is-done { color: #53545c; }
+.gw-tab.is-done.is-selected { color: #8d8e98; }
+.gw-tab.is-done .glyph { display: none; }
+
+@container (max-width: 118px) {
+  .gw-tab-key { display: none; }
+  .gw-tab.has-key .gw-tab-in { padding: 0 8px; }
+}
+@container (max-width: 66px) {
+  .gw-tab-title { display: none; }
+}
+
+/* The site's own highlight for a tab that needs you: a soft amber ring outside the capsule */
+.gw-tab::after {
+  content: "";
+  position: absolute;
+  inset: -2.5px;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1.5px var(--amber), 0 0 14px 1px rgba(240, 163, 94, 0.3);
+  opacity: 0;
+  transform: scale(1.22, 1.5);
+  transition: opacity 220ms ease, transform 560ms var(--ease-settle);
+  pointer-events: none;
+}
+.gw-tab.is-flagged::after { opacity: 1; transform: none; }
+
+.gw-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 7px 14px 0;
+  font-family: var(--font-term);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #eaebf0;
+  white-space: pre;
+  overflow: hidden;
+}
+/* Terminal lines never wrap; they clip at the window edge like a real terminal */
+.gw-body p { margin: 0; overflow: hidden; white-space: pre; text-wrap: nowrap; text-overflow: clip; }
+.t-dim { color: #7c7e8c; }
+.t-mid { color: #b2b4c0; }
+.t-you { color: #9aa0b8; }
+.t-ok { color: #9ec79b; }
+.t-wait { color: #eaebf0; }
+
+/* ---------- macOS menu bar ---------- */
+.macbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0 14px 0 16px;
+  font-family: var(--font-sys);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--mb-ink);
+  background: var(--mb-strip);
+  transition: background-color 600ms ease, color 600ms ease;
+}
+.macbar { gap: 16px; }
+.macbar-menus { display: flex; gap: 20px; min-width: 0; overflow: hidden; }
+@media (max-width: 480px) {
+  .macbar-extra { display: none; }
+  .macbar-menus { gap: 15px; }
+}
+.macbar-app { font-weight: 700; }
+.macbar-status { display: flex; align-items: center; gap: 12px; flex: none; }
+.macbar-clock { font-variant-numeric: tabular-nums; }
+
+[data-appearance="dark"] {
+  --mb-strip: rgba(40, 38, 50, 0.92);
+  --mb-ink: rgba(255, 255, 255, 0.92);
+  --pill-label: #ffffff;
+  --pill-secondary: rgba(255, 255, 255, 0.5);
+  --pill-accent: #c4a1f5;
+  --warn: #f0a35e;
+  --ok: #7fd59a;
+  --menu-panel: #2c2a37;
+  --menu-ink: #f2f1f6;
+  --menu-sub: rgba(235, 233, 245, 0.56);
+  --menu-line: rgba(255, 255, 255, 0.1);
+  --menu-edge: rgba(255, 255, 255, 0.12);
+}
+[data-appearance="light"] {
+  --mb-strip: rgba(246, 245, 249, 0.92);
+  --mb-ink: rgba(0, 0, 0, 0.85);
+  --pill-label: rgba(0, 0, 0, 0.86);
+  --pill-secondary: rgba(0, 0, 0, 0.45);
+  --pill-accent: #8a4fd8;
+  --warn: #c56a12;
+  --ok: #2f8a4f;
+  --menu-panel: #ffffff;
+  --menu-ink: #1d1b24;
+  --menu-sub: rgba(29, 27, 36, 0.55);
+  --menu-line: rgba(0, 0, 0, 0.09);
+  --menu-edge: rgba(0, 0, 0, 0.1);
+}
+
+/* ---------- The pill (PillView) ---------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 5px;
+  color: var(--pill-label);
+  font-family: var(--font-sys);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: background-color 260ms ease;
+}
+.pill.is-lit { background: rgba(138, 79, 216, 0.18); }
+.pill-mark {
+  position: relative;
+  display: block;
+  width: 13px;
+  height: 13px;
+  flex: none;
+  color: var(--pill-label);
+}
+.pill-mark svg { position: absolute; inset: 0; width: 13px; height: 13px; overflow: visible; }
+.pill[data-star="secondary"] .pill-mark { color: var(--pill-secondary); }
+.pill[data-star="accent"] .pill-mark { color: var(--pill-accent); }
+.pill-count { min-width: 0.6em; }
+.pill-count:empty { display: none; }
+.pill-dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  animation: dot-in 420ms var(--ease-settle) both;
+}
+.pill-dot--warn { background: var(--warn); }
+.pill-dot--ok { background: var(--ok); }
+@keyframes dot-in { from { transform: scale(0); } to { transform: none; } }
+
+/* ---------- TabPulse menu ---------- */
+.tpmenu {
+  position: absolute;
+  width: 330px;
+  padding: 6px 0;
+  border-radius: 10px;
+  background: var(--menu-panel);
+  color: var(--menu-ink);
+  font-family: var(--font-sys);
+  box-shadow: inset 0 0 0 0.5px var(--menu-edge), 0 8px 18px rgba(0, 0, 0, 0.4);
+  transform-origin: 92% 0;
+  transition: opacity 180ms ease, transform 240ms var(--ease-out), background-color 600ms ease;
+}
+.tpmenu.is-closed { opacity: 0; transform: scale(0.97) translateY(-4px); pointer-events: none; }
+.tpmenu-head {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding-left: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.9px;
+  color: var(--menu-sub);
+}
+.tprow {
+  position: relative;
+  height: 44px;
+  transition: transform 420ms var(--ease-out);
+}
+.tprow-glyph {
+  position: absolute;
+  left: 9px;
+  top: 13px;
+  width: 28px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-glyph);
+  font-size: 13px;
+  line-height: 1;
+  color: var(--pill-accent);
+}
+.tprow[data-state="waiting"] .tprow-glyph { color: var(--warn); }
+.tprow[data-state="done"] .tprow-glyph { color: var(--ok); }
+.tprow-title {
+  position: absolute;
+  left: 42px;
+  top: 6px;
+  max-width: 210px;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tprow-sub {
+  position: absolute;
+  left: 42px;
+  top: 23px;
+  max-width: 210px;
+  font-size: 11.5px;
+  line-height: 14px;
+  color: var(--menu-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tprow-time {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 64px;
+  text-align: right;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--menu-sub);
+  font-variant-numeric: tabular-nums;
+}
+.tprow.is-hover::before {
+  content: "";
+  position: absolute;
+  inset: 1px 5px;
+  border-radius: 6px;
+  background: #8a4fd8;
+}
+.tprow.is-hover .tprow-title,
+.tprow.is-hover .tprow-time,
+.tprow.is-hover .tprow-glyph { color: #fff; }
+.tprow.is-hover .tprow-sub { color: rgba(255, 255, 255, 0.8); }
+.tpmenu-sep { position: relative; height: 11px; }
+.tpmenu-sep::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 5px;
+  height: 1px;
+  background: var(--menu-line);
+}
+.tpmenu-foot {
+  display: flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 14px;
+  font-size: 12px;
+  color: var(--menu-sub);
+  white-space: nowrap;
+}
+.tpmenu-foot:empty { display: none; }
+
+/* ---------- macOS banner ---------- */
+.notif {
+  position: absolute;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  column-gap: 10px;
+  width: 344px;
+  padding: 11px 14px 12px 12px;
+  border-radius: 16px;
+  background: rgba(46, 44, 56, 0.9);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.16), 0 10px 26px rgba(0, 0, 0, 0.38);
+  color: #f4f3f8;
+  font-family: var(--font-sys);
+  font-size: 13px;
+  line-height: 17px;
+}
+.notif img { width: 32px; height: 32px; grid-row: 1 / 3; align-self: center; }
+.notif-title { font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-time { font-size: 12px; color: rgba(244, 243, 248, 0.55); }
+.notif-body { grid-column: 2 / 4; color: rgba(244, 243, 248, 0.82); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pill-dot { animation: none; }
+  .macbar { transition: none; }
+  .gw-tab::after { transform: none; transition: none; }
+}

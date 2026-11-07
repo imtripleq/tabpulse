@@ -1,0 +1,384 @@
+/* The night: problem statement, sticky laptop stage, chapters by the clock, and the sky behind it all. */
+
+/* ---------- Sky: the one scroll-linked moment ----------
+   Three layers over the night, each driven by a chapter's view timeline: the sky deepens through 00:30,
+   warms faintly at the horizon in the second half of 03:15 and turns to blue hour at 06:50.
+   Dawn is not a layer: it rises with the page under the 07:02 chapter (.dawn in dawn.css), so no text
+   is ever read while the sky behind it changes from dark to light. */
+@property --deep-p { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --warm-p { syntax: "<number>"; inherits: true; initial-value: 0; }
+@property --blue-p { syntax: "<number>"; inherits: true; initial-value: 0; }
+
+.sky { display: none; }
+html.sky-on .sky {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--night);
+  pointer-events: none;
+}
+.sky-deep,
+.sky-warm,
+.sky-blue { position: absolute; inset: 0; }
+.sky-deep {
+  background: linear-gradient(180deg, #080b1c 0%, #0b0f24 60%, #0e1329 100%);
+  opacity: var(--deep-p);
+}
+.sky-warm {
+  background: linear-gradient(180deg, rgba(40, 34, 74, 0) 0%, rgba(40, 34, 74, 0) 52%, rgba(64, 44, 86, 0.55) 86%, rgba(92, 58, 92, 0.7) 100%);
+  opacity: var(--warm-p);
+}
+.sky-blue {
+  background: linear-gradient(180deg, #1a2249 0%, #26326a 58%, #2f3e73 100%);
+  opacity: var(--blue-p);
+}
+html.sky-on { timeline-scope: --deep-tl, --warm-tl, --blue-tl; }
+@supports (animation-timeline: view()) {
+  html.sky-on.sky-css #at-0030 { view-timeline: --deep-tl block; }
+  html.sky-on.sky-css #at-0315 { view-timeline: --warm-tl block; }
+  html.sky-on.sky-css #at-0650 { view-timeline: --blue-tl block; }
+  html.sky-on.sky-css body {
+    animation: sky-deep linear both, sky-warm linear both, sky-blue linear both;
+    animation-timeline: --deep-tl, --warm-tl, --blue-tl;
+    animation-range: cover 0% cover 100%, cover 50% cover 100%, entry 0% cover 50%;
+  }
+}
+@keyframes sky-deep { from { --deep-p: 0; } to { --deep-p: 1; } }
+@keyframes sky-warm { from { --warm-p: 0; } to { --warm-p: 1; } }
+@keyframes sky-blue { from { --blue-p: 0; } to { --blue-p: 1; } }
+
+/* ---------- Section ---------- */
+.night {
+  position: relative;
+  padding: var(--section) 0 4vh; /* dawn rises right under the last chapter */
+  background: linear-gradient(180deg, var(--night) 0%, var(--night) 64%, #1f2a57 86%, var(--dusk) 100%);
+}
+html.sky-on .night { background: transparent; }
+
+.prologue {
+  width: min(100% - 2 * var(--gutter), var(--maxw));
+  margin-inline: auto;
+}
+.prologue-title {
+  max-width: 21ch;
+  font-size: var(--text-h2);
+  font-weight: 790;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  font-variation-settings: "CASL" 0.8, "MONO" 0;
+}
+.prologue-text {
+  max-width: 52ch;
+  margin-top: 28px;
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  color: var(--moon);
+}
+
+.night-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(16px, 2.6vw, 40px);
+  width: min(100% - 2 * var(--gutter), var(--maxw));
+  margin: clamp(48px, 6vw, 96px) auto 0;
+}
+
+/* ---------- Sticky stage ---------- */
+.stage-col {
+  grid-column: 5 / -1;
+  grid-row: 1;
+  align-self: start;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  gap: 14px;
+  z-index: 2;
+}
+.stage-frame {
+  position: relative;
+  width: 100%;
+  height: var(--stage-h, 560px);
+}
+.stage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+.stage-foot .motion-toggle { flex: none; white-space: nowrap; }
+.stage-foot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+/* While the lid is shut, a note floats where the screen was: what is still running, with a live tab spinner */
+.stage-note {
+  position: absolute;
+  left: 50%;
+  top: var(--note-y, 56%);
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: max-content;
+  max-width: min(42ch, 88%);
+  padding: 12px 18px 13px;
+  border-radius: 16px;
+  background: rgba(11, 14, 32, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(233, 230, 247, 0.1);
+  font-size: var(--text-small);
+  line-height: 1.5;
+  text-align: center;
+  color: var(--haze);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 360ms ease;
+  pointer-events: none;
+}
+.stage-note.is-on { opacity: 1; transition-delay: 900ms; } /* once the lid has nearly shut */
+.stage-note-live { display: inline-flex; align-items: center; gap: 8px; font-weight: 620; color: var(--moon); }
+.stage-note .glyph { color: var(--lavender); font-size: 1.3em; }
+
+/* The laptop. A real 3D hinge: the lid rotates on its bottom edge over a deck that lies flat. */
+.laptop {
+  position: absolute;
+  perspective: var(--persp, 5200px);
+  transform-style: preserve-3d;
+}
+.lid,
+.lid-front,
+.lid-back { position: absolute; inset: 0; }
+.lid {
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(0deg);
+}
+.lid-front {
+  padding: var(--bezel-t) var(--bezel-x) var(--bezel-b);
+  border-radius: 20px 20px 8px 8px;
+  background: #090a10;
+  box-shadow: inset 0 0 0 1.5px #343747, inset 0 0 0 3px #0c0d14;
+  backface-visibility: hidden;
+}
+.lid-front::after {
+  /* camera notch */
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #1d2030;
+  transform: translateX(-50%);
+}
+.lid-back {
+  border-radius: 20px 20px 8px 8px;
+  background: linear-gradient(180deg, #3c3f4f 0%, #2f3241 60%, #2a2c3a 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transform: rotateX(180deg);
+  backface-visibility: hidden;
+}
+.deck {
+  position: absolute;
+  transform-origin: 50% 0;
+  transform: rotateX(90deg);
+  transform-style: preserve-3d;
+  border-radius: 0 0 16px 16px;
+  background: linear-gradient(180deg, #23252f 0%, #2e3140 18%, #2a2d3b 100%);
+}
+.deck::before {
+  content: "";
+  position: absolute;
+  inset: 7% 7% 44% 7%;
+  border-radius: 8px;
+  background: #171922;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.deck::after {
+  content: "";
+  position: absolute;
+  left: 32%;
+  right: 32%;
+  top: 61%;
+  bottom: 7%;
+  border-radius: 10px;
+  background: #262937;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+.deck-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 11px;
+  border-radius: 0 0 10px 10px;
+  transform-origin: 50% 0;
+  transform: rotateX(-90deg);
+  background: linear-gradient(180deg, #3a3d4c, #1b1d27);
+}
+
+.screen {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(125deg, #7b5ea7, #2f3e73);
+}
+.screen .macbar { position: absolute; left: 0; right: 0; top: 0; z-index: 4; }
+.screen .gw { z-index: 1; }
+.screen .tpmenu { z-index: 5; }
+.screen-shade {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  background: #050610;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The tabs that carry a beat (the one that needs you, the one in front) never render below 11 px,
+   however far the stage is scaled down; the needy one also takes a little more of the strip for its title */
+.stage .gw-tab.is-flagged,
+.stage .gw-tab.is-selected { font-size: max(13px, calc(11px / var(--stage-s, 1))); }
+.stage .gw-tab.is-flagged { flex-grow: 1.4; }
+
+/* On a phone the open menu keeps only its rows, so the Ghostty tabs below it stay visible */
+.stage[data-mode="narrow"] .screen .tpmenu-sep,
+.stage[data-mode="narrow"] .screen .tpmenu-foot { display: none; }
+
+/* Banners slide in from the right, like macOS */
+.notif-stack { position: absolute; z-index: 6; }
+.notif-stack .notif { position: relative; }
+.notif-stack.is-stacked::before,
+.notif-stack.is-stacked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 92%;
+  height: 24px;
+  border-radius: 0 0 14px 14px;
+  background: rgba(46, 44, 56, 0.7);
+  transform: translateX(-50%);
+  box-shadow: inset 0 -0.5px 0 rgba(255, 255, 255, 0.12);
+}
+.notif-stack.is-stacked::after { bottom: -15px; width: 84%; background: rgba(46, 44, 56, 0.5); }
+.notif-stack.is-stacked .notif { z-index: 1; }
+
+/* ---------- Chapters ---------- */
+.chapters { grid-column: 1 / span 4; grid-row: 1; }
+.chapter {
+  min-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  padding: 10vh 0;
+  max-width: 36ch;
+  transition: opacity 420ms ease;
+}
+/* Chapters you are not on dim to 0.7, which keeps moonlight body text above 4.5:1 on the night */
+html.js .chapter { opacity: 0.7; }
+html.js .chapter.is-active,
+html.rm .chapter,
+html.qa-still .chapter { opacity: 1; }
+.chapter:first-child { min-height: 80vh; }
+.chapter-title { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+.chapter-time {
+  display: block;
+  font-size: clamp(2.5rem, 2rem + 2vw, 3.75rem);
+  font-weight: 380;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variation-settings: "MONO" 1, "CASL" 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--moon);
+}
+.chapter-head {
+  font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  font-weight: 760;
+  line-height: 1.12;
+  letter-spacing: -0.018em;
+  font-variation-settings: "CASL" 0.75, "MONO" 0;
+}
+.chapter p { color: var(--moon); }
+.chapter-aside {
+  padding-left: 16px;
+  box-shadow: inset 2px 0 0 var(--line-night);
+  font-size: var(--text-small);
+}
+.btn-key {
+  background: rgba(233, 230, 247, 0.08);
+  color: var(--moon);
+  box-shadow: inset 0 0 0 1px rgba(233, 230, 247, 0.28);
+  white-space: normal;
+  text-align: left;
+  min-height: 48px;
+  padding: 8px 18px 8px 10px;
+}
+.btn-key:hover { background: rgba(233, 230, 247, 0.14); }
+.btn-key .kbd-inline {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #0a0d1d;
+  box-shadow: inset 0 0 0 1px rgba(233, 230, 247, 0.14);
+}
+.btn-key.is-beep { animation: beep 340ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+.stage-jump-note { min-height: 1.6em; font-size: var(--text-small); }
+
+/* ---------- Narrow: stage pinned on top, chapters scroll underneath ---------- */
+@media (max-width: 900px) {
+  .night { padding-bottom: 6vh; }
+  .night-grid { display: block; margin-top: 40px; }
+  .stage-col {
+    position: sticky;
+    top: 0;
+    height: auto;
+    margin: 0 calc(-1 * var(--gutter));
+    padding: 10px var(--gutter) 22px;
+    gap: 8px;
+    /* The same sky numbers as the fixed sky behind, and its own colours at those heights, so the pinned stage never shows a seam */
+    background: linear-gradient(180deg,
+      color-mix(in srgb,
+        color-mix(in srgb, var(--night), #080b1c calc(var(--deep-p) * 100%)),
+        #1a2249 calc(var(--blue-p) * 100%)) 0%,
+      color-mix(in srgb,
+        color-mix(in srgb, var(--night), #0a0e22 calc(var(--deep-p) * 100%)),
+        #242f64 calc(var(--blue-p) * 100%)) 100%);
+    -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 18px), transparent);
+    mask-image: linear-gradient(180deg, #000 calc(100% - 18px), transparent);
+  }
+  .chapter {
+    min-height: 78svh;
+    justify-content: flex-start;
+    padding: 8svh 0 10svh;
+    max-width: 60ch;
+    scroll-margin-top: 46svh; /* a link to a chapter lands below the sticky stage */
+  }
+  .chapter:first-child { min-height: 70svh; padding-top: 4svh; }
+  .chapter--dawn { min-height: 50svh; padding-bottom: 6svh; }
+  .stage-note { --note-y: 44%; padding: 10px 14px 11px; }
+  /* The pause control floats on the stage's corner instead of taking its own row */
+  .stage-foot { position: absolute; right: var(--gutter); bottom: 12px; z-index: 3; }
+  .motion-toggle--stage { width: 36px; min-height: 36px; padding: 0; justify-content: center; }
+  .motion-toggle--stage .motion-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .chapter-time { font-size: 2.25rem; }
+  .chapter-head { font-size: 1.375rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapter, .tpmenu, .tprow, .stage-note { transition: none; }
+}

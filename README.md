@@ -11,6 +11,8 @@ See which Claude Code sessions are working, waiting on you or done, right on you
 ![macOS 14+](https://img.shields.io/badge/macOS-14%2B-black)
 [![License: MIT](https://img.shields.io/badge/license-MIT-8a4fd8)](LICENSE)
 
+Website: [imtripleq.github.io/tabpulse](https://imtripleq.github.io/tabpulse/)
+
 </div>
 
 Claude Code only animates the tab you're looking at, so from any other tab a busy session looks idle. TabPulse puts a spinner on every working tab, a ● on any tab that needs you, and a session count in the menu bar.

@@ -5,3 +5,6 @@ build/
 xcuserdata/
 .DS_Store
 .serena/
+site/research/
+site/prototypes/
+site/assets-extracted/

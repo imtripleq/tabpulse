@@ -1,0 +1,322 @@
+/* Night shift: tokens, type, shared controls. */
+
+:root {
+  /* Sky: night at the top of the page, dawn at the end */
+  --night: #12172e;
+  --night-deep: #0d1124;
+  --dusk: #2f3e73;
+  --blue-hour: #1f2a57;
+  --dawn: #e4e6f5;
+  --dawn-deep: #d6d9ee;
+
+  /* Ink */
+  --moon: #e9e6f7;
+  --haze: #a3a6c4;
+  --dawn-ink: #1e1a2b;
+  --dawn-muted: #4d4862;
+  --dawn-link: #6a37b8; /* dawn accent darkened for AA text; #8a4fd8 is kept for marks */
+
+  /* The app's dark palette: lavender = working, amber = needs you, mint = done.
+     Amber is used for "needs you" and nothing else on the page. */
+  --lavender: #c4a1f5;
+  --amber: #f0a35e;
+  --mint: #7fd59a;
+  --dawn-accent: #8a4fd8;
+
+  --line-night: rgba(233, 230, 247, 0.14);
+  --fill-night: rgba(233, 230, 247, 0.06);
+  --line-dawn: rgba(30, 26, 43, 0.13);
+
+  /* Type: one family (Recursive), its axes as roles */
+  --font-ui: var(--tp-font-recursive);
+  --font-sys: var(--tp-font-system);
+  --font-term: var(--tp-font-terminal);
+  --font-glyph: var(--tp-font-glyphs);
+  --font-key: system-ui, -apple-system, "JetBrains Mono", sans-serif;
+
+  --text-small: 0.9375rem;
+  --text-body: clamp(1.0625rem, 1rem + 0.2vw, 1.125rem);
+  --text-h3: 1.25rem;
+  --text-h2: clamp(2.125rem, 1.4rem + 2.4vw, 3.375rem);
+  --text-h1: clamp(2.6rem, 6vw, 5.5rem);
+
+  /* Space */
+  --gutter: clamp(16px, 4.4vw, 64px);
+  --maxw: 1312px;
+  --section: clamp(96px, 7vw + 56px, 176px);
+
+  /* Motion. Product timings (0.12 s tick, 1.6 s spin) live in JS; these are the site's own. */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-settle: cubic-bezier(0.34, 1.42, 0.64, 1);
+
+  /* Spinner glyph box, set per style from JS so frame swaps never reflow */
+  --glyph-w: 0.6em;
+
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--night);
+}
+
+body {
+  margin: 0;
+  background: transparent;
+  color: var(--moon);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: 1.6;
+  font-weight: 400;
+  font-variation-settings: "CASL" 0, "MONO" 0;
+  font-synthesis: none;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+img, svg { display: block; max-width: 100%; }
+p, h1, h2, h3, ol, ul, dl, dd, figure, pre { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; }
+code, pre {
+  font-family: var(--font-ui);
+  font-variation-settings: "MONO" 1, "CASL" 0;
+  font-variant-numeric: tabular-nums;
+}
+:where(p, li, dd, summary) code { font-size: 0.9em; overflow-wrap: break-word; }
+
+h1, h2, h3 {
+  font-weight: 780;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  font-variation-settings: "CASL" 0.7, "MONO" 0;
+  text-wrap: balance;
+}
+h2 { font-size: var(--text-h2); }
+h3 {
+  font-size: var(--text-h3);
+  line-height: 1.3;
+  letter-spacing: -0.008em;
+  font-weight: 720;
+  font-variation-settings: "CASL" 0.5, "MONO" 0;
+}
+p { text-wrap: pretty; }
+
+/* Product symbols. Recursive has none of ⌃ ⌥ ⌘ or ●, so they come from the faces macOS itself uses. */
+.kbd-inline {
+  font-family: var(--font-key);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  font-variation-settings: normal;
+}
+.glyph-inline {
+  font-family: var(--font-glyph);
+  font-variation-settings: normal;
+  font-weight: 400;
+}
+.nowrap { white-space: nowrap; }
+
+.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--moon);
+  color: var(--night);
+  font-weight: 650;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform 200ms var(--ease-out);
+}
+.skip:focus-visible { transform: none; }
+
+:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+.dawn :focus-visible,
+.footer :focus-visible { outline-color: var(--dawn-link); }
+
+/* Links */
+.link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  transition: text-decoration-color 160ms ease;
+}
+.link:hover { text-decoration-color: currentColor; }
+.dawn .link,
+.footer .link { color: var(--dawn-link); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 9px;
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  font-weight: 640;
+  font-variation-settings: "CASL" 0.35, "MONO" 0;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 120ms var(--ease-out);
+}
+.btn:active { transform: translateY(1px); }
+.icon-star { width: 16px; height: 16px; fill: currentColor; flex: none; }
+
+.btn-copy { background: var(--dawn-link); color: #fff; min-width: 13.5em; }
+.btn-copy:hover { background: #7a45c9; }
+.btn-copy.is-copied { background: var(--mint); color: var(--night); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--moon);
+  box-shadow: inset 0 0 0 1px rgba(233, 230, 247, 0.3);
+}
+.btn-ghost:hover { box-shadow: inset 0 0 0 1px rgba(233, 230, 247, 0.7); background: var(--fill-night); }
+
+.dawn .btn-copy { background: var(--dawn-link); color: #fff; }
+.dawn .btn-copy:hover { background: #5a2ca5; }
+.dawn .btn-copy.is-copied { background: #2f6f45; color: #fff; }
+.btn-dawn { background: var(--dawn-ink); color: var(--dawn); }
+.btn-dawn:hover { background: #352e4a; }
+
+/* Command box. The command wraps rather than scrolls, so nothing is hidden at 360 px. */
+.cmd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 18px;
+  border-radius: 12px;
+  background: rgba(10, 13, 30, 0.6);
+  box-shadow: inset 0 0 0 1px var(--line-night);
+}
+.cmd-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--moon);
+  /* long URLs break only at the <wbr> after each slash, or at a space */
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  padding: 6px 0;
+}
+.cmd-text::before { content: "$ "; color: var(--haze); }
+.cmd-text[data-prompt="none"]::before { content: none; }
+.cmd .btn { flex: none; }
+.cmd--light {
+  background: #f6f6fc;
+  box-shadow: inset 0 0 0 1px var(--line-dawn);
+}
+.cmd--light .cmd-text { color: var(--dawn-ink); }
+.cmd--light .cmd-text::before { color: var(--dawn-muted); }
+.cmd--block { align-items: flex-end; }
+
+@media (max-width: 600px) {
+  .cmd { flex-direction: column; align-items: stretch; padding: 14px; gap: 12px; }
+  .cmd .btn { width: 100%; }
+  .cmd-text { padding: 0; }
+}
+
+/* Pause control (one state for every demo on the page) */
+.motion-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 14px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(10, 13, 30, 0.62);
+  color: var(--moon);
+  box-shadow: inset 0 0 0 1px var(--line-night);
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  font-weight: 560;
+  cursor: pointer;
+  transition: box-shadow 160ms ease, background-color 160ms ease;
+}
+.motion-toggle:hover { box-shadow: inset 0 0 0 1px rgba(233, 230, 247, 0.5); }
+.motion-icon { position: relative; width: 10px; height: 11px; flex: none; }
+.motion-icon::before,
+.motion-icon::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 11px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.motion-icon::before { left: 0.5px; }
+.motion-icon::after { right: 0.5px; }
+.motion-toggle.is-paused .motion-icon::before {
+  left: 1px;
+  width: 0;
+  height: 0;
+  border-radius: 0;
+  background: none;
+  border-style: solid;
+  border-width: 5.5px 0 5.5px 9px;
+  border-color: transparent transparent transparent currentColor;
+}
+.motion-toggle.is-paused .motion-icon::after { display: none; }
+
+/* Shared 12-column grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: clamp(16px, 2.2vw, 32px);
+  width: min(100% - 2 * var(--gutter), var(--maxw));
+  margin-inline: auto;
+}
+.grid > * { grid-column: 1 / -1; min-width: 0; }
+
+.lead { font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem); line-height: 1.55; max-width: 46ch; }
+.small { font-size: var(--text-small); line-height: 1.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skip, .btn, .link, .motion-toggle { transition: none; }
+}
+
+/* Header links land with a little air above the heading */
+section[id],
+.install-alt[id] { scroll-margin-top: 28px; }
+
+/* QA capture only (?still): skip transitions so headless screenshots show end states */
+.qa-still *, .qa-still *::before, .qa-still *::after { transition-duration: 0s !important; transition-delay: 0s !important; }
+.qa-still .pill-dot { animation: none; }

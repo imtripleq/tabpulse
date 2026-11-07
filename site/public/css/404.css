@@ -1,0 +1,31 @@
+/* 404: the night sky with an idle star. Linked with root-absolute paths so it renders at any depth. */
+
+.nf {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background:
+    linear-gradient(180deg, rgba(64, 44, 86, 0) 62%, rgba(64, 44, 86, 0.45) 100%),
+    linear-gradient(180deg, var(--night-deep) 0%, var(--night) 45%, var(--blue-hour) 100%);
+  background-color: var(--night);
+}
+
+.nf-main {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 28px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: min(100% - 2 * var(--gutter), 760px);
+  margin-inline: auto;
+  padding-block: 64px;
+}
+
+/* The menu bar mark at rest: grey and still, nothing working */
+.nf-star { width: 44px; height: 44px; color: var(--haze); }
+
+.nf-title {
+  font-size: var(--text-h2);
+  font-weight: 760;
+  font-variation-settings: "CASL" 0.75, "MONO" 0;
+}
